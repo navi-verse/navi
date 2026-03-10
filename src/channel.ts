@@ -2,7 +2,6 @@
 
 import { abortSession, chat, getAuthStorage, resetSession } from "./agent";
 import { config } from "./config";
-import { appendLog } from "./store";
 
 export interface ChannelContext {
 	respond(text: string): Promise<void>;
@@ -65,7 +64,6 @@ export async function handleMessage(contactId: string, text: string, ctx: Channe
 	}
 
 	// ── Send to agent and reply ────────────────────────
-	appendLog(contactId, "user", text);
 	await ctx.setTyping();
 
 	const start = Date.now();
@@ -74,7 +72,6 @@ export async function handleMessage(contactId: string, text: string, ctx: Channe
 	const logPreview = response.replace(/\n/g, " ").substring(0, 80);
 	console.log(`🤖 ${contactId} (${duration}s): ${logPreview}${response.length > 80 ? "..." : ""}`);
 
-	appendLog(contactId, "assistant", response);
 	await ctx.stopTyping();
 	await ctx.respond(response);
 }
