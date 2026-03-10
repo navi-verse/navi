@@ -46,12 +46,11 @@ Settings live in `~/.navi/settings.json` (created on first run):
 
 Send these in WhatsApp:
 
-| Command    | What it does                    |
-| ---------- | ------------------------------- |
-| /providers | Show login status               |
-| /model     | List available models           |
-| /reset     | Clear conversation, start fresh |
-| /help      | Show available commands         |
+| Command | What it does                    |
+| ------- | ------------------------------- |
+| /status | Show model & provider info      |
+| /reset  | Clear conversation, start fresh |
+| /help   | Show available commands         |
 
 ## Adding capabilities
 

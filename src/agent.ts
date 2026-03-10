@@ -23,10 +23,6 @@ export function getAuthStorage(): AuthStorage {
 	return authStorage;
 }
 
-export function getModelRegistry(): ModelRegistry {
-	return modelRegistry;
-}
-
 export function initAgent() {
 	authStorage = AuthStorage.create();
 	modelRegistry = new ModelRegistry(authStorage);

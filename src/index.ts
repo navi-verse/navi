@@ -1,6 +1,7 @@
 // index.ts — Main entry point
 
-import { chat, getAuthStorage, getModelRegistry, initAgent, resetSession } from "./agent.js";
+import { chat, getAuthStorage, initAgent, resetSession } from "./agent.js";
+import { config } from "./config.js";
 import { connectWhatsApp } from "./whatsapp.js";
 
 async function main() {
@@ -29,10 +30,9 @@ async function main() {
 					"",
 					"Just send me a message and I'll respond.",
 					"",
-					"/providers — Show login status",
-					"/model     — List available models",
-					"/reset     — Start a fresh conversation",
-					"/help      — Show this message",
+					"/status — Show model & provider info",
+					"/reset  — Start a fresh conversation",
+					"/help   — Show this message",
 					"",
 					"Log in via CLI: npm run login",
 				].join("\n"),
@@ -40,36 +40,24 @@ async function main() {
 			return;
 		}
 
-		// ── /providers ───────────────────────────────────────
-		if (trimmed === "/providers") {
+		// ── /status ──────────────────────────────────────────
+		if (trimmed === "/status") {
 			const authStorage = getAuthStorage();
 			const providers = authStorage.getOAuthProviders();
-			const lines = providers.map((p) => {
-				const loggedIn = authStorage.has(p.id) ? "✅" : "—";
-				return `${loggedIn} ${p.name} (${p.id})`;
-			});
-			await sock.sendMessage(jid, {
-				text: ["*Provider Status:*", "", ...lines, "", "Log in via CLI: npm run login"].join("\n"),
-			});
-			return;
-		}
+			const loggedIn = providers.filter((p) => authStorage.has(p.id));
+			const providerList = loggedIn.map((p) => p.name).join(", ") || "none";
 
-		// ── /model ───────────────────────────────────────────
-		if (trimmed === "/model") {
-			const available = getModelRegistry().getAvailable();
-			if (available.length === 0) {
-				await sock.sendMessage(jid, {
-					text: "No models available. Log in via CLI: npm run login",
-				});
-			} else {
-				const lines = available.slice(0, 15).map((m) => `• ${m.name} (${m.provider}/${m.id})`);
-				if (available.length > 15) {
-					lines.push(`... and ${available.length - 15} more`);
-				}
-				await sock.sendMessage(jid, {
-					text: ["*Available Models:*", "", ...lines].join("\n"),
-				});
-			}
+			await sock.sendMessage(jid, {
+				text: [
+					"🤖 *Navi Status*",
+					"",
+					`🧠 *Model:* ${config.model || "auto"}`,
+					`💭 *Thinking:* ${config.thinkingLevel || "off"}`,
+					`🔌 *Providers:* ${providerList}`,
+					"",
+					"Log in via CLI: npm run login",
+				].join("\n"),
+			});
 			return;
 		}
 
@@ -77,8 +65,10 @@ async function main() {
 		await sock.presenceSubscribe(jid);
 		await sock.sendPresenceUpdate("composing", jid);
 
+		const start = Date.now();
 		const response = await chat(jid, text);
-		console.log(`🤖 ${jid}: ${response.substring(0, 80)}${response.length > 80 ? "..." : ""}`);
+		const duration = ((Date.now() - start) / 1000).toFixed(1);
+		console.log(`🤖 ${jid} (${duration}s): ${response.substring(0, 80)}${response.length > 80 ? "..." : ""}`);
 
 		await sock.sendPresenceUpdate("paused", jid);
 
