@@ -1,0 +1,65 @@
+# Navi
+
+Personal messaging assistant powered by Pi's coding agent SDK (`@mariozechner/pi-coding-agent`).
+Messages from WhatsApp (and future channels) route to per-contact agent sessions with shell access, persistent memory, and Pi's extensibility.
+
+## Architecture
+
+Three-layer design for channel-agnostic messaging:
+
+```
+Transport (whatsapp.ts)  →  Channel (channel.ts)  →  Agent (agent.ts)
+creates ChannelContext       commands + routing        session management
+```
+
+- **Transport** — channel-specific connection, creates a `ChannelContext` per message
+- **Channel** — shared command handling (`/stop`, `/reset`, `/status`, `/help`) and agent routing
+- **Agent** — Pi SDK session management, one session per contact ID, channel-agnostic
+
+To add a new channel: create a transport that produces a `ChannelContext`, wire it in `index.ts` with `handleMessage`.
+
+## Source files
+
+```
+src/
+  index.ts      — Entry point, bootstraps agent + transports
+  config.ts     — Loads ~/.navi/settings.json with defaults
+  channel.ts    — ChannelContext interface, handleMessage(), commands
+  agent.ts      — Session management, chat(), abortSession(), resetSession()
+  whatsapp.ts   — Baileys WhatsApp transport
+```
+
+## Key concepts
+
+- **Model format**: `"provider/model"` (e.g. `"anthropic/claude-sonnet-4-6"`)
+- **Sessions persist** across restarts via `SessionManager.continueRecent()`
+- **WhatsApp delivers offline messages** on reconnect — no backfill needed
+- **Config** lives at `~/.navi/settings.json`, data at `~/.navi/`
+- **Baileys** must be installed from GitHub (`github:WhiskeySockets/Baileys`), not npm (stale)
+
+## Commands
+
+```
+npm run dev     — Run with tsx
+npm run build   — Compile TypeScript
+npm run check   — Type-check + format (biome --write)
+npm run ci      — Type-check + lint (no write)
+npm run login   — Log in to an AI provider
+```
+
+## Formatting & linting
+
+- Biome with tabs, 120 line width, double quotes, semicolons
+- Claude Code hooks auto-format `.ts` files on Write/Edit
+- Pre-commit hook runs `npm run ci` before any git commit
+
+## Workflow preferences
+
+- **KISS & YAGNI** — minimal code for current requirements, no speculative abstractions
+- **Commit in meaningful slices** — one logical change per commit, not one big blob
+- **Read before edit** — always read existing code before modifying
+- **Type-check before commit** — `npx tsc --noEmit` must pass
+- **No `.js` in imports** — using `moduleResolution: "bundler"` with tsx
+- **No unnecessary docs/comments** — code should be self-explanatory
+- **Ask before over-engineering** — don't add features, refactors, or abstractions beyond what's requested
+- **Always ask to commit** — after completing a meaningful change, ask if the user wants to commit
