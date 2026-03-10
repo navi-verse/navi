@@ -10,7 +10,7 @@ import {
 	SessionManager,
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
-import { config } from "./config.js";
+import { config } from "./config";
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();

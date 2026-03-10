@@ -1,8 +1,8 @@
 // channel.ts — Channel abstraction and shared message handling
 
-import { abortSession, chat, getAuthStorage, resetSession } from "./agent.js";
-import { config } from "./config.js";
-import { appendLog } from "./store.js";
+import { abortSession, chat, getAuthStorage, resetSession } from "./agent";
+import { config } from "./config";
+import { appendLog } from "./store";
 
 export interface ChannelContext {
 	respond(text: string): Promise<void>;

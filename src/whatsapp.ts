@@ -10,8 +10,8 @@ import makeWASocket, {
 import pino from "pino";
 // @ts-expect-error no types available
 import qrcode from "qrcode-terminal";
-import type { ChannelContext } from "./channel.js";
-import { config } from "./config.js";
+import type { ChannelContext } from "./channel";
+import { config } from "./config";
 
 export type MessageHandler = (contactId: string, text: string, ctx: ChannelContext) => Promise<void>;
 

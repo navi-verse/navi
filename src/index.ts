@@ -1,8 +1,8 @@
 // index.ts — Main entry point
 
-import { initAgent } from "./agent.js";
-import { handleMessage } from "./channel.js";
-import { connectWhatsApp } from "./whatsapp.js";
+import { initAgent } from "./agent";
+import { handleMessage } from "./channel";
+import { connectWhatsApp } from "./whatsapp";
 
 async function main() {
 	console.log("╔══════════════════════════════════════╗");
