@@ -92,7 +92,6 @@ Each WhatsApp contact gets their own isolated Navi session with separate history
 
 - **The agent has shell access** on the host machine. Run this in a container or VM if you don't fully trust the people messaging it.
 - **Use `allowedJids`** to restrict access to your own number.
-- Only use the official `@whiskeysockets/baileys` package — [malicious forks exist](https://www.npmjs.com/package/baileys).
 
 ## Data storage
 
