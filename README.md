@@ -1,8 +1,8 @@
-# Pi WhatsApp Assistant
+# Navi
 
 A personal WhatsApp assistant powered by [Pi's coding agent SDK](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent).
 
-Messages you send on WhatsApp are routed to a Pi agent session that has shell access, persistent memory, and all of Pi's extensibility (skills, extensions, prompt templates).
+Messages you send on WhatsApp are routed to a Navi agent session that has shell access, persistent memory, and all of Pi's extensibility (skills, extensions, prompt templates).
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ Messages you send on WhatsApp are routed to a Pi agent session that has shell ac
 ```bash
 # Clone and install
 git clone <your-repo>
-cd pi-whatsapp-assistant
+cd navi
 npm install
 
 # (Optional) pre-configure an API key via env var:
@@ -68,9 +68,9 @@ After login, a sane default model is automatically selected (e.g. `claude-sonnet
 
 Pi's extension and skill system works normally:
 
-- **Skills**: Drop a `SKILL.md` into `.pi/skills/` or `~/.pi/agent/skills/`
-- **Extensions**: Add TypeScript extensions to `.pi/extensions/`
-- **Prompt templates**: Add `.md` files to `.pi/prompts/`
+- **Skills**: Drop a `SKILL.md` into `.navi/skills/` or `~/.navi/agent/skills/`
+- **Extensions**: Add TypeScript extensions to `.navi/extensions/`
+- **Prompt templates**: Add `.md` files to `.navi/prompts/`
 
 Example: add web search by installing a pi package:
 
@@ -101,7 +101,7 @@ index.ts ── routes by JID ──► agent.ts
 WhatsApp (reply)
 ```
 
-Each WhatsApp contact gets their own isolated Pi session with separate history and context.
+Each WhatsApp contact gets their own isolated Navi session with separate history and context.
 
 ## Security notes
 
@@ -111,10 +111,13 @@ Each WhatsApp contact gets their own isolated Pi session with separate history a
 
 ## Data storage
 
+Everything lives under `~/.navi/`:
+
 ```
-data/
-  baileys-auth/    # WhatsApp session credentials (keep private!)
-  pi-sessions/     # Per-contact Pi conversation history
+~/.navi/
+  agent/           # SDK config (auth.json, models.json, settings.json)
+  sessions/        # Per-contact Navi conversation history
+  whatsapp-auth/   # WhatsApp session credentials (keep private!)
 ```
 
 ## License

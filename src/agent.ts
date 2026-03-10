@@ -1,4 +1,4 @@
-// agent.ts — Pi SDK session management, one session per WhatsApp contact
+// agent.ts — Navi session management, one session per WhatsApp contact
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -35,7 +35,7 @@ export function initAgent() {
 		mkdirSync(config.sessionsDir, { recursive: true });
 	}
 
-	console.log("🤖 Pi agent initialized");
+	console.log("🤖 Navi initialized");
 }
 
 /**
@@ -69,7 +69,7 @@ export async function setDefaultModelForProvider(providerId: string): Promise<st
 }
 
 /**
- * Get or create a Pi session for a WhatsApp contact.
+ * Get or create a Navi session for a WhatsApp contact.
  * Each contact gets their own isolated session with its own history.
  */
 async function getSession(jid: string) {
@@ -106,7 +106,7 @@ async function getSession(jid: string) {
 }
 
 /**
- * Send a message to the Pi agent and collect the full response.
+ * Send a message to the Navi agent and collect the full response.
  * Returns the complete text response.
  */
 export async function chat(jid: string, userMessage: string): Promise<string> {

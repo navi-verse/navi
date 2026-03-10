@@ -26,7 +26,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 	const sock = makeWASocket({
 		auth: state,
 		logger,
-		browser: Browsers.ubuntu("Pi Assistant"),
+		browser: Browsers.ubuntu("Navi"),
 	});
 
 	// Save credentials whenever they update

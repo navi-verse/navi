@@ -1,5 +1,5 @@
 {
-  "name": "pi-whatsapp-assistant",
+  "name": "navi",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,6 +15,10 @@
     "@whiskeysockets/baileys": "7.0.0-rc.9",
     "pino": "^10.3.1",
     "qrcode-terminal": "^0.12.0"
+  },
+  "piConfig": {
+    "name": "navi",
+    "configDir": ".navi"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",

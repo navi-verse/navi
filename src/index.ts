@@ -13,10 +13,10 @@ import { connectWhatsApp } from "./whatsapp.js";
 
 async function main() {
 	console.log("╔══════════════════════════════════════╗");
-	console.log("║   Pi WhatsApp Assistant              ║");
+	console.log("║   Navi WhatsApp Assistant            ║");
 	console.log("╚══════════════════════════════════════╝\n");
 
-	// Initialize the Pi agent (loads auth, model registry)
+	// Initialize the Navi agent (loads auth, model registry)
 	initAgent();
 
 	// Connect to WhatsApp and handle incoming messages
@@ -44,7 +44,7 @@ async function main() {
 		if (trimmed === "/help") {
 			await sock.sendMessage(jid, {
 				text: [
-					"🤖 *Pi Assistant*",
+					"🤖 *Navi*",
 					"",
 					"Just send me a message and I'll respond.",
 					"",
@@ -158,7 +158,7 @@ async function main() {
 			return;
 		}
 
-		// ── Send to Pi agent and reply ─────────────────────
+		// ── Send to Navi agent and reply ────────────────────
 		// Show typing indicator while processing
 		await sock.presenceSubscribe(jid);
 		await sock.sendPresenceUpdate("composing", jid);

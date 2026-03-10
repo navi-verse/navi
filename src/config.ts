@@ -1,5 +1,10 @@
 // config.ts — Edit this to customize your assistant
 
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+const naviDir = join(homedir(), ".navi");
+
 export const config = {
 	// ── Who can talk to the bot ──────────────────────────────
 	// WhatsApp JIDs of allowed contacts. Empty array = allow everyone.
@@ -9,7 +14,7 @@ export const config = {
 		"41795397073@s.whatsapp.net", // nadine
 	] as string[],
 
-	// ── Pi agent settings ────────────────────────────────────
+	// ── Navi agent settings ─────────────────────────────────
 	// Working directory the agent operates in (careful — it has shell access)
 	agentCwd: process.env.AGENT_CWD || process.cwd(),
 
@@ -27,9 +32,9 @@ If the user asks you to do something on the computer, you have shell access via 
 	// "memory"     = sessions reset on restart
 	sessionMode: "persistent" as "persistent" | "memory",
 
-	// Directory for persistent Pi sessions
-	sessionsDir: "./data/pi-sessions",
+	// Directory for persistent Navi sessions
+	sessionsDir: join(naviDir, "sessions"),
 
 	// Directory for Baileys auth state
-	baileysAuthDir: "./data/baileys-auth",
+	baileysAuthDir: join(naviDir, "whatsapp-auth"),
 };
