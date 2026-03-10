@@ -12,7 +12,7 @@ async function main() {
 	initAgent();
 
 	// Connect to WhatsApp and handle incoming messages
-	const sock = await connectWhatsApp(async (jid, text, _msg) => {
+	await connectWhatsApp(async (sock, jid, text, _msg) => {
 		const trimmed = text.trim();
 
 		// ── Built-in commands ──────────────────────────────
@@ -74,7 +74,6 @@ async function main() {
 		}
 
 		// ── Send to Navi agent and reply ────────────────────
-		// Show typing indicator while processing
 		await sock.presenceSubscribe(jid);
 		await sock.sendPresenceUpdate("composing", jid);
 
@@ -87,13 +86,6 @@ async function main() {
 		for (const chunk of chunks) {
 			await sock.sendMessage(jid, { text: chunk });
 		}
-	});
-
-	// Graceful shutdown
-	process.on("SIGINT", () => {
-		console.log("\n👋 Shutting down...");
-		sock.end(undefined);
-		process.exit(0);
 	});
 }
 

@@ -57,7 +57,8 @@ function loadSettings(): NaviSettings {
 	mkdirSync(dataDir, { recursive: true });
 
 	if (!existsSync(settingsPath)) {
-		writeFileSync(settingsPath, `${JSON.stringify(defaults, null, "\t")}\n`);
+		const minimal = { allowedJids: [] as string[] };
+		writeFileSync(settingsPath, `${JSON.stringify(minimal, null, "\t")}\n`);
 		return defaults;
 	}
 

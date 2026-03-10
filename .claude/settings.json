@@ -1,0 +1,35 @@
+{
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": ".claude/hooks/pre-commit-check.sh"
+					}
+				]
+			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": ".claude/hooks/format-on-save.sh"
+					}
+				]
+			},
+			{
+				"matcher": "Edit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": ".claude/hooks/format-on-save.sh"
+					}
+				]
+			}
+		]
+	}
+}
