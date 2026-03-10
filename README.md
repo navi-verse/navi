@@ -29,7 +29,7 @@ On first run you'll see a QR code in your terminal. Scan it with WhatsApp (Setti
 
 ## Configuration
 
-Edit `src/config.ts`:
+Settings live in `~/.navi/settings.json` (created on first run):
 
 - **allowedJids** — restrict who can talk to the bot (empty = everyone)
 - **systemPrompt** — customize the assistant's personality
@@ -40,30 +40,12 @@ Edit `src/config.ts`:
 
 Send these in WhatsApp:
 
-| Command            | What it does                                    |
-| ------------------ | ----------------------------------------------- |
-| /login             | List available OAuth providers                  |
-| /login \<n\|name\> | Log in to a provider (Anthropic, Copilot, etc.) |
-| /logout \<id\>     | Log out from a provider                         |
-| /providers         | Show login status for all providers             |
-| /model             | List available models                           |
-| /reset             | Clear conversation, start fresh                 |
-| /cancel            | Cancel a pending login prompt                   |
-| /help              | Show available commands                         |
-
-### Authentication
-
-The recommended way to log in is via the CLI before starting the bot:
-
-```bash
-npm run login
-```
-
-This opens Pi's interactive login flow in your terminal with full OAuth support for all providers (Anthropic, GitHub Copilot, Google Gemini, Antigravity, OpenAI Codex).
-
-You can also log in via WhatsApp using `/login` as a fallback.
-
-After login, a sane default model is automatically selected (e.g. `claude-sonnet-4-6` for Anthropic, `gemini-3.1-pro-preview` for Gemini CLI, `gpt-5.4` for OpenAI Codex).
+| Command    | What it does                    |
+| ---------- | ------------------------------- |
+| /providers | Show login status               |
+| /model     | List available models           |
+| /reset     | Clear conversation, start fresh |
+| /help      | Show available commands         |
 
 ## Adding capabilities
 
@@ -87,15 +69,11 @@ WhatsApp (Baileys)
   │  incoming message
   ▼
 index.ts ── routes by JID ──► agent.ts
-  │         │                    │
-  │    /login, /logout      createAgentSession()
-  │         │               per-contact sessions
-  │         ▼                    │
-  │      oauth.ts                │
-  │    (OAuth flows,             │
-  │     pending input)           │
-  │         │                    │
-  │  response text               │
+  │                              │
+  │                         createAgentSession()
+  │                         per-contact sessions
+  │                              │
+  │         response text        │
   ◄──────────────────────────────┘
   │
   ▼

@@ -10,7 +10,6 @@ import {
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
 import { config } from "./config.js";
-import { DEFAULT_MODELS } from "./oauth.js";
 
 // Stores active sessions keyed by WhatsApp JID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -39,36 +38,6 @@ export function initAgent() {
 }
 
 /**
- * After OAuth login, set the default model for all active sessions.
- * Also refreshes the model registry to pick up newly available models.
- */
-export async function setDefaultModelForProvider(providerId: string): Promise<string> {
-	modelRegistry.refresh();
-
-	const defaults = DEFAULT_MODELS[providerId];
-	if (!defaults) return "Logged in (no default model configured for this provider).";
-
-	const model = modelRegistry.find(defaults.provider, defaults.modelId);
-	if (!model) {
-		// Try to find any available model from this provider
-		const available = modelRegistry.getAvailable().filter((m) => m.provider === defaults.provider);
-		if (available.length > 0) {
-			const fallback = available[0];
-			for (const [, result] of sessions) {
-				await result.session.setModel(fallback);
-			}
-			return `Logged in. Model set to ${fallback.name} (${fallback.provider}/${fallback.id}).`;
-		}
-		return `Logged in, but could not find default model ${defaults.modelId}. Use /model to select one.`;
-	}
-
-	for (const [, result] of sessions) {
-		await result.session.setModel(model);
-	}
-	return `Logged in. Model set to ${model.name} (${model.provider}/${model.id}).`;
-}
-
-/**
  * Get or create a Navi session for a WhatsApp contact.
  * Each contact gets their own isolated session with its own history.
  */
@@ -88,7 +57,18 @@ async function getSession(jid: string) {
 
 	const settingsManager = SettingsManager.create(config.agentCwd);
 	settingsManager.applyOverrides({
+		defaultProvider: config.defaultProvider,
+		defaultModel: config.defaultModel,
+		defaultThinkingLevel: config.defaultThinkingLevel,
+		steeringMode: config.steeringMode,
+		followUpMode: config.followUpMode,
 		compaction: { enabled: config.compaction },
+		retry: config.retry,
+		shellPath: config.shellPath,
+		enabledModels: config.enabledModels,
+		packages: config.packages,
+		extensions: config.extensions,
+		skills: config.skills,
 	});
 
 	const result = await createAgentSession({

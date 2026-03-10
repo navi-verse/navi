@@ -1,14 +1,6 @@
 // index.ts — Main entry point
 
-import {
-	chat,
-	getAuthStorage,
-	getModelRegistry,
-	initAgent,
-	resetSession,
-	setDefaultModelForProvider,
-} from "./agent.js";
-import { cancelOAuthInput, listProviders, performLogin, resolveOAuthInput, resolveProvider } from "./oauth.js";
+import { chat, getAuthStorage, getModelRegistry, initAgent, resetSession } from "./agent.js";
 import { connectWhatsApp } from "./whatsapp.js";
 
 async function main() {
@@ -23,21 +15,10 @@ async function main() {
 	const sock = await connectWhatsApp(async (jid, text, _msg) => {
 		const trimmed = text.trim();
 
-		// ── Check for pending OAuth input first ──────────────
-		if (resolveOAuthInput(jid, trimmed)) {
-			return; // Message was consumed by the OAuth flow
-		}
-
 		// ── Built-in commands ──────────────────────────────
 		if (trimmed === "/reset") {
 			await resetSession(jid);
 			await sock.sendMessage(jid, { text: "🔄 Session reset. Fresh start!" });
-			return;
-		}
-
-		if (trimmed === "/cancel") {
-			cancelOAuthInput(jid);
-			await sock.sendMessage(jid, { text: "Cancelled." });
 			return;
 		}
 
@@ -48,80 +29,14 @@ async function main() {
 					"",
 					"Just send me a message and I'll respond.",
 					"",
-					"/login        — Log in to an AI provider (OAuth)",
-					"/login <n>    — Log in to provider by number",
-					"/logout <id>  — Log out from a provider",
-					"/providers    — List logged-in providers",
-					"/model        — Show current model info",
-					"/reset        — Start a fresh conversation",
-					"/cancel       — Cancel pending login",
-					"/help         — Show this message",
+					"/providers — Show login status",
+					"/model     — List available models",
+					"/reset     — Start a fresh conversation",
+					"/help      — Show this message",
+					"",
+					"Log in via CLI: npm run login",
 				].join("\n"),
 			});
-			return;
-		}
-
-		// ── /login [provider] ────────────────────────────────
-		if (trimmed === "/login") {
-			const msg = listProviders(getAuthStorage());
-			await sock.sendMessage(jid, { text: msg });
-			return;
-		}
-
-		if (trimmed.startsWith("/login ")) {
-			const arg = trimmed.slice("/login ".length).trim();
-			const providerId = resolveProvider(getAuthStorage(), arg);
-
-			if (!providerId) {
-				await sock.sendMessage(jid, {
-					text: `Unknown provider "${arg}".\n\n${listProviders(getAuthStorage())}`,
-				});
-				return;
-			}
-
-			const provider = getAuthStorage()
-				.getOAuthProviders()
-				.find((p) => p.id === providerId);
-			await sock.sendMessage(jid, {
-				text: `Starting login for ${provider?.name ?? providerId}...`,
-			});
-
-			try {
-				await performLogin(getAuthStorage(), providerId, {
-					jid,
-					sendMessage: async (text: string) => {
-						await sock.sendMessage(jid, { text });
-					},
-				});
-
-				const modelMsg = await setDefaultModelForProvider(providerId);
-				await sock.sendMessage(jid, { text: `✅ ${modelMsg}` });
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				await sock.sendMessage(jid, { text: `❌ Login failed: ${msg}` });
-			}
-			return;
-		}
-
-		// ── /logout <provider> ───────────────────────────────
-		if (trimmed.startsWith("/logout")) {
-			const arg = trimmed.slice("/logout".length).trim();
-			if (!arg) {
-				await sock.sendMessage(jid, {
-					text: "Usage: /logout <provider-id>\nSee /providers for logged-in providers.",
-				});
-				return;
-			}
-
-			const providerId = resolveProvider(getAuthStorage(), arg);
-			if (!providerId) {
-				await sock.sendMessage(jid, { text: `Unknown provider "${arg}".` });
-				return;
-			}
-
-			getAuthStorage().logout(providerId);
-			getModelRegistry().refresh();
-			await sock.sendMessage(jid, { text: `Logged out from ${providerId}.` });
 			return;
 		}
 
@@ -134,7 +49,7 @@ async function main() {
 				return `${loggedIn} ${p.name} (${p.id})`;
 			});
 			await sock.sendMessage(jid, {
-				text: ["*Provider Status:*", "", ...lines].join("\n"),
+				text: ["*Provider Status:*", "", ...lines, "", "Log in via CLI: npm run login"].join("\n"),
 			});
 			return;
 		}
@@ -144,7 +59,7 @@ async function main() {
 			const available = getModelRegistry().getAvailable();
 			if (available.length === 0) {
 				await sock.sendMessage(jid, {
-					text: "No models available. Use /login to authenticate with a provider.",
+					text: "No models available. Log in via CLI: npm run login",
 				});
 			} else {
 				const lines = available.slice(0, 15).map((m) => `• ${m.name} (${m.provider}/${m.id})`);
