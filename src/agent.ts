@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
 	AuthStorage,
 	createAgentSession,
+	DefaultResourceLoader,
 	ModelRegistry,
 	SessionManager,
 	SettingsManager,
@@ -88,12 +89,23 @@ async function getSession(jid: string) {
 		skills: config.skills,
 	});
 
+	const resourceLoader = new DefaultResourceLoader({
+		cwd: config.agentCwd,
+		settingsManager,
+		systemPrompt: config.systemPrompt,
+	});
+	await resourceLoader.reload();
+
 	const result = await createAgentSession({
 		cwd: config.agentCwd,
 		authStorage,
 		modelRegistry,
 		settingsManager,
-		sessionManager: config.sessionMode === "persistent" ? SessionManager.create(sessionDir) : SessionManager.inMemory(),
+		resourceLoader,
+		sessionManager:
+			config.sessionMode === "persistent"
+				? SessionManager.create(config.agentCwd, sessionDir)
+				: SessionManager.inMemory(),
 	});
 
 	sessions.set(jid, result);
