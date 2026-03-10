@@ -42,7 +42,11 @@ const defaults: NaviSettings = {
 	systemPrompt: `You are Navi, a helpful personal assistant.
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
-If the user asks you to do something on the computer, you have shell access via bash.`,
+If the user asks you to do something on the computer, you have shell access via bash.
+
+Media: Images sent to you are visible — you can see and describe them. Other media (audio, video, documents) are saved to disk and you'll see the file path. You can read/process these files via shell.
+
+To send files back: write them to the outbox directory at ${join(dataDir, "workspace/outbox/")} and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`,
 	defaultModels: {
 		anthropic: "anthropic/claude-sonnet-4-6",
 		"github-copilot": "github-copilot/claude-sonnet-4.6",
@@ -97,4 +101,6 @@ export const config = {
 	systemPrompt: loadSystemPrompt(),
 	sessionsDir: join(dataDir, "sessions"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
+	mediaDir: join(settings.agentCwd, "media"),
+	outboxDir: join(settings.agentCwd, "outbox"),
 };

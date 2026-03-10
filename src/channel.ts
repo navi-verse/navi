@@ -3,13 +3,25 @@
 import { abortSession, chat, getAuthStorage, resetSession } from "./agent";
 import { config } from "./config";
 
+export interface ImageAttachment {
+	type: "image";
+	data: string;
+	mimeType: string;
+}
+
 export interface ChannelContext {
 	respond(text: string): Promise<void>;
+	sendMedia(filePath: string, options?: { caption?: string; mimeType?: string }): Promise<void>;
 	setTyping(): Promise<void>;
 	stopTyping(): Promise<void>;
 }
 
-export async function handleMessage(contactId: string, text: string, ctx: ChannelContext): Promise<void> {
+export async function handleMessage(
+	contactId: string,
+	text: string,
+	ctx: ChannelContext,
+	images?: ImageAttachment[],
+): Promise<void> {
 	const trimmed = text.trim();
 
 	// ── Built-in commands ──────────────────────────────
@@ -67,7 +79,7 @@ export async function handleMessage(contactId: string, text: string, ctx: Channe
 	await ctx.setTyping();
 
 	const start = Date.now();
-	const response = await chat(contactId, text);
+	const response = await chat(contactId, text, images);
 	const duration = ((Date.now() - start) / 1000).toFixed(1);
 	const logPreview = response.replace(/\n/g, " ").substring(0, 80);
 	console.log(`🤖 ${contactId} (${duration}s): ${logPreview}${response.length > 80 ? "..." : ""}`);

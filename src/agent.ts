@@ -10,6 +10,7 @@ import {
 	SessionManager,
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
+import type { ImageAttachment } from "./channel";
 import { config } from "./config";
 
 // Stores active sessions keyed by contact ID
@@ -106,7 +107,7 @@ async function getSession(contactId: string) {
  * Send a message to the Navi agent and collect the full response.
  * Returns the complete text response.
  */
-export async function chat(contactId: string, userMessage: string): Promise<string> {
+export async function chat(contactId: string, userMessage: string, images?: ImageAttachment[]): Promise<string> {
 	const { session } = await getSession(contactId);
 
 	// Collect the streamed response
@@ -118,7 +119,7 @@ export async function chat(contactId: string, userMessage: string): Promise<stri
 	});
 
 	try {
-		await session.prompt(userMessage);
+		await session.prompt(userMessage, images?.length ? { images } : undefined);
 	} finally {
 		unsubscribe();
 	}
