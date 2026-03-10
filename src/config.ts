@@ -34,7 +34,6 @@ interface NaviSettings {
 	packages?: PackageSource[];
 	extensions: string[];
 	skills: string[];
-	sessionMode: "persistent" | "memory";
 }
 
 const defaults: NaviSettings = {
@@ -58,7 +57,6 @@ If the user asks you to do something on the computer, you have shell access via 
 	retry: { enabled: true, maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 30000 },
 	extensions: [join(dataDir, "extensions")],
 	skills: [join(dataDir, "skills")],
-	sessionMode: "persistent",
 };
 
 function loadSettings(): NaviSettings {

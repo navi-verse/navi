@@ -32,10 +32,7 @@ export function initAgent() {
 	modelRegistry = new ModelRegistry(authStorage);
 
 	mkdirSync(config.agentCwd, { recursive: true });
-
-	if (config.sessionMode === "persistent") {
-		mkdirSync(config.sessionsDir, { recursive: true });
-	}
+	mkdirSync(config.sessionsDir, { recursive: true });
 
 	// Resolve model — either explicit or auto-pick from first logged-in provider
 	if (!config.model) {
@@ -67,9 +64,7 @@ async function getSession(jid: string) {
 	const contactId = jid.replace(/[^a-zA-Z0-9]/g, "_");
 	const sessionDir = join(config.sessionsDir, contactId);
 
-	if (config.sessionMode === "persistent") {
-		mkdirSync(sessionDir, { recursive: true });
-	}
+	mkdirSync(sessionDir, { recursive: true });
 
 	const settingsManager = SettingsManager.create(config.agentCwd);
 	const [defaultProvider, defaultModel] = config.model?.split("/") ?? [];
@@ -102,10 +97,7 @@ async function getSession(jid: string) {
 		modelRegistry,
 		settingsManager,
 		resourceLoader,
-		sessionManager:
-			config.sessionMode === "persistent"
-				? SessionManager.create(config.agentCwd, sessionDir)
-				: SessionManager.inMemory(),
+		sessionManager: SessionManager.continueRecent(config.agentCwd, sessionDir),
 	});
 
 	sessions.set(jid, result);
