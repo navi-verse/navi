@@ -68,7 +68,8 @@ async function main() {
 		const start = Date.now();
 		const response = await chat(jid, text);
 		const duration = ((Date.now() - start) / 1000).toFixed(1);
-		console.log(`🤖 ${jid} (${duration}s): ${response.substring(0, 80)}${response.length > 80 ? "..." : ""}`);
+		const logPreview = response.replace(/\n/g, " ").substring(0, 80);
+		console.log(`🤖 ${jid} (${duration}s): ${logPreview}${response.length > 80 ? "..." : ""}`);
 
 		await sock.sendPresenceUpdate("paused", jid);
 
