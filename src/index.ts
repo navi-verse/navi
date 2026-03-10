@@ -6,7 +6,7 @@ import { connectWhatsApp } from "./whatsapp";
 
 async function main() {
 	console.log("╔══════════════════════════════════════╗");
-	console.log("║   Navi WhatsApp Assistant            ║");
+	console.log("║   Navi Personal Assistant            ║");
 	console.log("╚══════════════════════════════════════╝\n");
 
 	initAgent();

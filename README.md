@@ -1,6 +1,6 @@
 # Navi
 
-A personal WhatsApp assistant powered by [Pi's coding agent SDK](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent).
+A personal assistant powered by [Pi's coding agent SDK](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent).
 
 Messages you send on WhatsApp are routed to a Navi agent session that has shell access, persistent memory, and all of Pi's extensibility (skills, extensions, prompt templates).
 
