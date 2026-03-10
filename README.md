@@ -48,6 +48,7 @@ Send these in WhatsApp:
 
 | Command | What it does                    |
 | ------- | ------------------------------- |
+| /stop   | Stop the current response       |
 | /status | Show model & provider info      |
 | /reset  | Clear conversation, start fresh |
 | /help   | Show available commands         |

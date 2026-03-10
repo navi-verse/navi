@@ -1,6 +1,6 @@
 // channel.ts — Channel abstraction and shared message handling
 
-import { chat, getAuthStorage, resetSession } from "./agent.js";
+import { abortSession, chat, getAuthStorage, resetSession } from "./agent.js";
 import { config } from "./config.js";
 
 export interface ChannelContext {
@@ -13,6 +13,12 @@ export async function handleMessage(contactId: string, text: string, ctx: Channe
 	const trimmed = text.trim();
 
 	// ── Built-in commands ──────────────────────────────
+	if (trimmed === "/stop") {
+		const stopped = await abortSession(contactId);
+		await ctx.respond(stopped ? "⏹️ Stopped." : "Nothing running.");
+		return;
+	}
+
 	if (trimmed === "/reset") {
 		await resetSession(contactId);
 		await ctx.respond("🔄 Session reset. Fresh start!");
@@ -26,6 +32,7 @@ export async function handleMessage(contactId: string, text: string, ctx: Channe
 				"",
 				"Just send me a message and I'll respond.",
 				"",
+				"/stop   — Stop the current response",
 				"/status — Show model & provider info",
 				"/reset  — Start a fresh conversation",
 				"/help   — Show this message",

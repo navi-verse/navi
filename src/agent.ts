@@ -127,9 +127,25 @@ export async function chat(contactId: string, userMessage: string): Promise<stri
 }
 
 /**
+ * Abort the current agent operation for a contact.
+ */
+export async function abortSession(contactId: string): Promise<boolean> {
+	const existing = sessions.get(contactId);
+	if (!existing) return false;
+
+	await existing.session.abort();
+	console.log(`⏹️ Aborted session for ${contactId}`);
+	return true;
+}
+
+/**
  * Reset a contact's session (e.g. if they send "/reset")
  */
 export async function resetSession(contactId: string): Promise<void> {
+	const existing = sessions.get(contactId);
+	if (existing) {
+		await existing.session.abort();
+	}
 	sessions.delete(contactId);
 	console.log(`🗑️ Reset session for ${contactId}`);
 }
