@@ -22,9 +22,9 @@ interface NaviSettings {
 	allowedJids: string[];
 	agentCwd: string;
 	systemPrompt: string;
-	defaultProvider?: string;
-	defaultModel?: string;
-	defaultThinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
+	model?: string;
+	defaultModels: Record<string, string>;
+	thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 	steeringMode: "all" | "one-at-a-time";
 	followUpMode: "all" | "one-at-a-time";
 	compaction: boolean;
@@ -44,6 +44,14 @@ const defaults: NaviSettings = {
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
 If the user asks you to do something on the computer, you have shell access via bash.`,
+	defaultModels: {
+		anthropic: "anthropic/claude-sonnet-4-6",
+		"github-copilot": "github-copilot/claude-sonnet-4.6",
+		"google-gemini-cli": "google-gemini-cli/gemini-3.1-pro-preview",
+		"google-antigravity": "google-antigravity/gemini-3.1-pro-high",
+		"openai-codex": "openai-codex/gpt-5.4",
+	},
+	thinkingLevel: "low",
 	steeringMode: "all",
 	followUpMode: "all",
 	compaction: true,
@@ -57,7 +65,7 @@ function loadSettings(): NaviSettings {
 	mkdirSync(dataDir, { recursive: true });
 
 	if (!existsSync(settingsPath)) {
-		const minimal = { allowedJids: [] as string[] };
+		const minimal = { allowedJids: [] as string[], model: "anthropic/claude-sonnet-4-6" };
 		writeFileSync(settingsPath, `${JSON.stringify(minimal, null, "\t")}\n`);
 		return defaults;
 	}

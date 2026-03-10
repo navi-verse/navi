@@ -35,9 +35,8 @@ Settings live in `~/.navi/settings.json` (created on first run):
 {
   "allowedJids": ["19995551234@s.whatsapp.net"], // country code + number
   "systemPrompt": "You are Navi, a helpful assistant...",
-  "defaultProvider": "anthropic",        // unset by default, SDK auto-picks
-  "defaultModel": "claude-sonnet-4-6",   // unset by default
-  "defaultThinkingLevel": "medium",      // off | minimal | low | medium | high | xhigh
+  "model": "anthropic/claude-sonnet-4-6",  // provider/model, auto-picked if unset
+  "thinkingLevel": "medium",             // off | minimal | low | medium | high | xhigh
   "steeringMode": "all",                 // all | one-at-a-time
   "followUpMode": "all"                  // all | one-at-a-time
 }

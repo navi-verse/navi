@@ -78,6 +78,7 @@ async function main() {
 		await sock.sendPresenceUpdate("composing", jid);
 
 		const response = await chat(jid, text);
+		console.log(`🤖 ${jid}: ${response.substring(0, 80)}${response.length > 80 ? "..." : ""}`);
 
 		await sock.sendPresenceUpdate("paused", jid);
 

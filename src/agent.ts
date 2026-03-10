@@ -36,6 +36,19 @@ export function initAgent() {
 		mkdirSync(config.sessionsDir, { recursive: true });
 	}
 
+	// Resolve model — either explicit or auto-pick from first logged-in provider
+	if (!config.model) {
+		for (const [provider, model] of Object.entries(config.defaultModels)) {
+			if (authStorage.has(provider)) {
+				config.model = model;
+				break;
+			}
+		}
+	}
+	if (config.model) {
+		console.log(`📌 Model: ${config.model}`);
+	}
+
 	console.log("🤖 Navi initialized");
 }
 
@@ -58,10 +71,12 @@ async function getSession(jid: string) {
 	}
 
 	const settingsManager = SettingsManager.create(config.agentCwd);
+	const [defaultProvider, defaultModel] = config.model?.split("/") ?? [];
+
 	settingsManager.applyOverrides({
-		defaultProvider: config.defaultProvider,
-		defaultModel: config.defaultModel,
-		defaultThinkingLevel: config.defaultThinkingLevel,
+		defaultProvider,
+		defaultModel,
+		defaultThinkingLevel: config.thinkingLevel,
 		steeringMode: config.steeringMode,
 		followUpMode: config.followUpMode,
 		compaction: { enabled: config.compaction },
