@@ -1,40 +1,52 @@
-// config.ts — Edit this to customize your assistant
+// config.ts — Loads settings from ~/.navi/settings.json with defaults
 
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const naviDir = join(homedir(), ".navi");
+export const dataDir = join(homedir(), ".navi");
+const settingsPath = join(dataDir, "settings.json");
 
-export const config = {
-	// ── Who can talk to the bot ──────────────────────────────
-	// WhatsApp JIDs of allowed contacts. Empty array = allow everyone.
-	// Format: "19995551234@s.whatsapp.net" (country code + number)
-	allowedJids: [
-		"41788771003@s.whatsapp.net", // andy
-		"41795397073@s.whatsapp.net", // nadine
-	] as string[],
+interface NaviSettings {
+	allowedJids: string[];
+	agentCwd: string;
+	systemPrompt: string;
+	compaction: boolean;
+	sessionMode: "persistent" | "memory";
+}
 
-	// ── Navi agent settings ─────────────────────────────────
-	// Working directory the agent operates in (careful — it has shell access)
+const defaults: NaviSettings = {
+	allowedJids: [],
 	agentCwd: process.env.AGENT_CWD || process.cwd(),
-
-	// System prompt prepended to every session
 	systemPrompt: `You are Navi, a helpful personal assistant on WhatsApp.
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
 If the user asks you to do something on the computer, you have shell access via bash.`,
-
-	// Enable/disable compaction for long conversations
 	compaction: true,
+	sessionMode: "persistent",
+};
 
-	// ── Session behavior ─────────────────────────────────────
-	// "persistent" = sessions saved to disk, survive restarts
-	// "memory"     = sessions reset on restart
-	sessionMode: "persistent" as "persistent" | "memory",
+function loadSettings(): NaviSettings {
+	mkdirSync(dataDir, { recursive: true });
 
-	// Directory for persistent Navi sessions
-	sessionsDir: join(naviDir, "sessions"),
+	if (!existsSync(settingsPath)) {
+		writeFileSync(settingsPath, `${JSON.stringify(defaults, null, "\t")}\n`);
+		return defaults;
+	}
 
-	// Directory for Baileys auth state
-	baileysAuthDir: join(naviDir, "whatsapp-auth"),
+	try {
+		const raw = JSON.parse(readFileSync(settingsPath, "utf-8"));
+		return { ...defaults, ...raw };
+	} catch (err) {
+		console.error(`Failed to parse ${settingsPath}, using defaults:`, err);
+		return defaults;
+	}
+}
+
+const settings = loadSettings();
+
+export const config = {
+	...settings,
+	sessionsDir: join(dataDir, "sessions"),
+	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };

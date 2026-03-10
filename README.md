@@ -8,7 +8,7 @@ Messages you send on WhatsApp are routed to a Navi agent session that has shell 
 
 - Node.js 18+
 - A WhatsApp account (you'll scan a QR code to link)
-- An LLM provider account — log in via WhatsApp (`/login`) or set env vars
+- An LLM provider account
 
 ## Setup
 
@@ -18,9 +18,8 @@ git clone <your-repo>
 cd navi
 npm install
 
-# (Optional) pre-configure an API key via env var:
-export ANTHROPIC_API_KEY=sk-ant-...
-# Or log in via WhatsApp after starting (see Commands below)
+# Log in to an AI provider (interactive CLI flow)
+npm run login
 
 # Start the assistant
 npm run dev
@@ -52,15 +51,17 @@ Send these in WhatsApp:
 | /cancel            | Cancel a pending login prompt                   |
 | /help              | Show available commands                         |
 
-### OAuth login
+### Authentication
 
-The bot supports OAuth login for five providers:
+The recommended way to log in is via the CLI before starting the bot:
 
-- **Anthropic** (Claude Pro/Max) — opens browser, paste code back in WhatsApp
-- **GitHub Copilot** — device code flow, polls automatically
-- **Google Gemini CLI** — browser-based, local callback server
-- **Google Antigravity** — browser-based, local callback server
-- **OpenAI Codex** (ChatGPT Plus/Pro) — browser-based, local callback server
+```bash
+npm run login
+```
+
+This opens Pi's interactive login flow in your terminal with full OAuth support for all providers (Anthropic, GitHub Copilot, Google Gemini, Antigravity, OpenAI Codex).
+
+You can also log in via WhatsApp using `/login` as a fallback.
 
 After login, a sane default model is automatically selected (e.g. `claude-sonnet-4-6` for Anthropic, `gemini-3.1-pro-preview` for Gemini CLI, `gpt-5.4` for OpenAI Codex).
 
@@ -68,9 +69,9 @@ After login, a sane default model is automatically selected (e.g. `claude-sonnet
 
 Pi's extension and skill system works normally:
 
-- **Skills**: Drop a `SKILL.md` into `.navi/skills/` or `~/.navi/agent/skills/`
-- **Extensions**: Add TypeScript extensions to `.navi/extensions/`
-- **Prompt templates**: Add `.md` files to `.navi/prompts/`
+- **Skills**: Drop a `SKILL.md` into `.pi/skills/` or `~/.pi/agent/skills/`
+- **Extensions**: Add TypeScript extensions to `.pi/extensions/`
+- **Prompt templates**: Add `.md` files to `.pi/prompts/`
 
 Example: add web search by installing a pi package:
 
@@ -111,13 +112,11 @@ Each WhatsApp contact gets their own isolated Navi session with separate history
 
 ## Data storage
 
-Everything lives under `~/.navi/`:
-
 ```
+~/.pi/agent/auth.json   # OAuth credentials (shared with Pi CLI)
 ~/.navi/
-  agent/           # SDK config (auth.json, models.json, settings.json)
-  sessions/        # Per-contact Navi conversation history
-  whatsapp-auth/   # WhatsApp session credentials (keep private!)
+  sessions/             # Per-contact conversation history
+  whatsapp-auth/        # WhatsApp session credentials (keep private!)
 ```
 
 ## License

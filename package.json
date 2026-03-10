@@ -7,6 +7,7 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "login": "npx pi /login",
     "check": "tsc --noEmit && biome check --write src/",
     "ci": "tsc --noEmit && biome check src/"
   },
@@ -15,10 +16,6 @@
     "@whiskeysockets/baileys": "7.0.0-rc.9",
     "pino": "^10.3.1",
     "qrcode-terminal": "^0.12.0"
-  },
-  "piConfig": {
-    "name": "navi",
-    "configDir": ".navi"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
