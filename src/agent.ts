@@ -71,7 +71,7 @@ async function getSession(contactId: string) {
 		defaultThinkingLevel: config.thinkingLevel,
 		steeringMode: config.steeringMode,
 		followUpMode: config.followUpMode,
-		compaction: { enabled: config.compaction },
+		compaction: { enabled: true },
 		retry: config.retry,
 		shellPath: config.shellPath,
 		enabledModels: config.enabledModels,

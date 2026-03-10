@@ -27,7 +27,6 @@ interface NaviSettings {
 	thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 	steeringMode: "all" | "one-at-a-time";
 	followUpMode: "all" | "one-at-a-time";
-	compaction: boolean;
 	retry: RetrySettings;
 	shellPath?: string;
 	enabledModels?: string[];
@@ -53,7 +52,6 @@ If the user asks you to do something on the computer, you have shell access via 
 	thinkingLevel: "low",
 	steeringMode: "all",
 	followUpMode: "all",
-	compaction: true,
 	retry: { enabled: true, maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 30000 },
 	extensions: [join(dataDir, "extensions")],
 	skills: [join(dataDir, "skills")],
