@@ -1,0 +1,22 @@
+{
+  "name": "pi-whatsapp-assistant",
+  "version": "0.1.0",
+  "description": "Personal WhatsApp assistant powered by Pi coding agent SDK",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "@hapi/boom": "^10.0.1",
+    "@mariozechner/pi-coding-agent": "^0.57.1",
+    "pino": "^10.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "tsx": "^4.21.0",
+    "@types/node": "^25.4.0"
+  }
+}
