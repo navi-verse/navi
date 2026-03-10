@@ -31,10 +31,17 @@ On first run you'll see a QR code in your terminal. Scan it with WhatsApp (Setti
 
 Settings live in `~/.navi/settings.json` (created on first run):
 
-- **allowedJids** — restrict who can talk to the bot (empty = everyone)
-- **systemPrompt** — customize the assistant's personality
-- **agentCwd** — working directory the agent's bash tool operates in
-- **sessionMode** — `"persistent"` (survives restarts) or `"memory"`
+```jsonc
+{
+  "allowedJids": ["19995551234@s.whatsapp.net"], // country code + number
+  "systemPrompt": "You are Navi, a helpful assistant...",
+  "defaultProvider": "anthropic",        // unset by default, SDK auto-picks
+  "defaultModel": "claude-sonnet-4-6",   // unset by default
+  "defaultThinkingLevel": "medium",      // off | minimal | low | medium | high | xhigh
+  "steeringMode": "all",                 // all | one-at-a-time
+  "followUpMode": "all"                  // all | one-at-a-time
+}
+```
 
 ## Commands
 

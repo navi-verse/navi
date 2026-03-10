@@ -39,13 +39,13 @@ interface NaviSettings {
 
 const defaults: NaviSettings = {
 	allowedJids: [],
-	agentCwd: process.env.AGENT_CWD || process.cwd(),
+	agentCwd: join(dataDir, "workspace"),
 	systemPrompt: `You are Navi, a helpful personal assistant on WhatsApp.
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
 If the user asks you to do something on the computer, you have shell access via bash.`,
-	steeringMode: "one-at-a-time",
-	followUpMode: "one-at-a-time",
+	steeringMode: "all",
+	followUpMode: "all",
 	compaction: true,
 	retry: { enabled: true, maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 30000 },
 	extensions: [join(dataDir, "extensions")],

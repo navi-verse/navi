@@ -30,6 +30,8 @@ export function initAgent() {
 	authStorage = AuthStorage.create();
 	modelRegistry = new ModelRegistry(authStorage);
 
+	mkdirSync(config.agentCwd, { recursive: true });
+
 	if (config.sessionMode === "persistent") {
 		mkdirSync(config.sessionsDir, { recursive: true });
 	}
