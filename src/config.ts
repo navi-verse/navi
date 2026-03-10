@@ -39,7 +39,7 @@ interface NaviSettings {
 const defaults: NaviSettings = {
 	allowedJids: [],
 	agentCwd: join(dataDir, "workspace"),
-	systemPrompt: `You are Navi, a helpful personal assistant on WhatsApp.
+	systemPrompt: `You are Navi, a helpful personal assistant.
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
 If the user asks you to do something on the computer, you have shell access via bash.`,
