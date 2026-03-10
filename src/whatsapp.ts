@@ -83,6 +83,9 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 
 			console.log(`📩 ${jid}: ${text.substring(0, 80)}${text.length > 80 ? "..." : ""}`);
 
+			// Mark as read (blue ticks)
+			await sock.readMessages([msg.key]);
+
 			const ctx: ChannelContext = {
 				async respond(response: string) {
 					const chunks = splitMessage(response, 4000);
