@@ -17,6 +17,13 @@ export type MessageHandler = (contactId: string, text: string, ctx: ChannelConte
 
 const logger = pino({ level: "error" });
 
+// libsignal spams console.info with "Closing session:" dumps — suppress them
+const _origInfo = console.info;
+console.info = (...args: unknown[]) => {
+	if (typeof args[0] === "string" && args[0].startsWith("Closing session")) return;
+	_origInfo(...args);
+};
+
 export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASocket> {
 	mkdirSync(config.baileysAuthDir, { recursive: true });
 
