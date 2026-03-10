@@ -2,7 +2,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export const dataDir = join(homedir(), ".navi");
 const settingsPath = join(dataDir, "settings.json");
@@ -76,9 +77,24 @@ function loadSettings(): NaviSettings {
 }
 
 const settings = loadSettings();
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const soulPath = join(dataDir, "soul.md");
+const defaultSoulPath = join(repoRoot, "docs", "SOUL.md");
+
+function loadSoul(): string {
+	if (existsSync(soulPath)) return readFileSync(soulPath, "utf-8").trim();
+	if (existsSync(defaultSoulPath)) return readFileSync(defaultSoulPath, "utf-8").trim();
+	return "";
+}
+
+function loadSystemPrompt(): string {
+	const soul = loadSoul();
+	return soul ? `${soul}\n\n${settings.systemPrompt}` : settings.systemPrompt;
+}
 
 export const config = {
 	...settings,
+	systemPrompt: loadSystemPrompt(),
 	sessionsDir: join(dataDir, "sessions"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };
