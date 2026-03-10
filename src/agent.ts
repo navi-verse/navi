@@ -1,4 +1,4 @@
-// agent.ts — Navi session management, one session per WhatsApp contact
+// agent.ts — Navi session management, one session per contact
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -12,7 +12,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import { config } from "./config.js";
 
-// Stores active sessions keyed by WhatsApp JID
+// Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
 
 // Shared auth + model registry (created once)
@@ -47,18 +47,18 @@ export function initAgent() {
 }
 
 /**
- * Get or create a Navi session for a WhatsApp contact.
+ * Get or create a Navi session for a contact.
  * Each contact gets their own isolated session with its own history.
  */
-async function getSession(jid: string) {
-	const existing = sessions.get(jid);
+async function getSession(contactId: string) {
+	const existing = sessions.get(contactId);
 	if (existing) {
 		return existing;
 	}
 
 	// Create a per-contact session directory for persistence
-	const contactId = jid.replace(/[^a-zA-Z0-9]/g, "_");
-	const sessionDir = join(config.sessionsDir, contactId);
+	const dirName = contactId.replace(/[^a-zA-Z0-9]/g, "_");
+	const sessionDir = join(config.sessionsDir, dirName);
 
 	mkdirSync(sessionDir, { recursive: true });
 
@@ -96,8 +96,8 @@ async function getSession(jid: string) {
 		sessionManager: SessionManager.continueRecent(config.agentCwd, sessionDir),
 	});
 
-	sessions.set(jid, result);
-	console.log(`🆕 Created session for ${jid}`);
+	sessions.set(contactId, result);
+	console.log(`🆕 Created session for ${contactId}`);
 
 	return result;
 }
@@ -106,8 +106,8 @@ async function getSession(jid: string) {
  * Send a message to the Navi agent and collect the full response.
  * Returns the complete text response.
  */
-export async function chat(jid: string, userMessage: string): Promise<string> {
-	const { session } = await getSession(jid);
+export async function chat(contactId: string, userMessage: string): Promise<string> {
+	const { session } = await getSession(contactId);
 
 	// Collect the streamed response
 	let response = "";
@@ -129,7 +129,7 @@ export async function chat(jid: string, userMessage: string): Promise<string> {
 /**
  * Reset a contact's session (e.g. if they send "/reset")
  */
-export async function resetSession(jid: string): Promise<void> {
-	sessions.delete(jid);
-	console.log(`🗑️ Reset session for ${jid}`);
+export async function resetSession(contactId: string): Promise<void> {
+	sessions.delete(contactId);
+	console.log(`🗑️ Reset session for ${contactId}`);
 }
