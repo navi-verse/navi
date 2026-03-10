@@ -30,7 +30,7 @@ On first run you'll see a QR code in your terminal. Scan it with WhatsApp (Setti
 
 ## Configuration
 
-Edit `config.ts`:
+Edit `src/config.ts`:
 
 - **allowedJids** — restrict who can talk to the bot (empty = everyone)
 - **systemPrompt** — customize the assistant's personality
@@ -41,16 +41,16 @@ Edit `config.ts`:
 
 Send these in WhatsApp:
 
-| Command          | What it does                                      |
-| ---------------- | ------------------------------------------------- |
-| /login           | List available OAuth providers                    |
-| /login \<n\|name\> | Log in to a provider (Anthropic, Copilot, etc.)   |
-| /logout \<id\>     | Log out from a provider                           |
-| /providers       | Show login status for all providers               |
-| /model           | List available models                             |
-| /reset           | Clear conversation, start fresh                   |
-| /cancel          | Cancel a pending login prompt                     |
-| /help            | Show available commands                           |
+| Command            | What it does                                    |
+| ------------------ | ----------------------------------------------- |
+| /login             | List available OAuth providers                  |
+| /login \<n\|name\> | Log in to a provider (Anthropic, Copilot, etc.) |
+| /logout \<id\>     | Log out from a provider                         |
+| /providers         | Show login status for all providers             |
+| /model             | List available models                           |
+| /reset             | Clear conversation, start fresh                 |
+| /cancel            | Cancel a pending login prompt                   |
+| /help              | Show available commands                         |
 
 ### OAuth login
 
@@ -62,7 +62,7 @@ The bot supports OAuth login for five providers:
 - **Google Antigravity** — browser-based, local callback server
 - **OpenAI Codex** (ChatGPT Plus/Pro) — browser-based, local callback server
 
-After login, a sane default model is automatically selected (e.g. `claude-sonnet-4-5` for Anthropic, `gemini-2.5-flash` for Google, `gpt-4o` for OpenAI).
+After login, a sane default model is automatically selected (e.g. `claude-sonnet-4-6` for Anthropic, `gemini-3.1-pro-preview` for Gemini CLI, `gpt-5.4` for OpenAI Codex).
 
 ## Adding capabilities
 
@@ -73,6 +73,7 @@ Pi's extension and skill system works normally:
 - **Prompt templates**: Add `.md` files to `.pi/prompts/`
 
 Example: add web search by installing a pi package:
+
 ```bash
 npx pi install npm:pi-skills --skills brave-search
 ```
