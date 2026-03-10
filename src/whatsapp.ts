@@ -15,7 +15,7 @@ import { config } from "./config";
 
 export type MessageHandler = (contactId: string, text: string, ctx: ChannelContext) => Promise<void>;
 
-const logger = pino({ level: "warn" });
+const logger = pino({ level: "error" });
 
 export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASocket> {
 	mkdirSync(config.baileysAuthDir, { recursive: true });
