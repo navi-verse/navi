@@ -118,7 +118,7 @@ async function getSession(contactId: string) {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(paths.workspace, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
-		customTools: [createCronTool(contactId)],
+		customTools: [createCronTool(contactId, paths.jobs)],
 	});
 
 	sessions.set(contactId, result);

@@ -117,6 +117,7 @@ export interface ChatPaths {
 	memory: string;
 	history: string;
 	heartbeat: string;
+	jobs: string;
 	soul: string;
 }
 
@@ -145,6 +146,7 @@ export function getChatPaths(contactId: string): ChatPaths {
 		memory: join(root, "MEMORY.md"),
 		history: join(root, "HISTORY.md"),
 		heartbeat: join(root, "HEARTBEAT.md"),
+		jobs: join(root, "jobs.json"),
 		soul: join(root, "SOUL.md"),
 	};
 }

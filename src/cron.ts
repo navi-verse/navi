@@ -1,35 +1,38 @@
-// cron.ts — Job scheduler: at/every/cron with JSON persistence and agent tool
+// cron.ts — Job scheduler: at/every/cron with per-chat JSON persistence and agent tool
 
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 import { type Static, Type } from "@sinclair/typebox";
 import { Cron } from "croner";
-import { dataDir } from "./config";
+import { config, contactIdFromDirName } from "./config";
 
 // ── Types ────────────────────────────────────────────
 
 interface CronJob {
 	id: string;
-	contactId: string;
 	type: "at" | "every" | "cron";
 	message: string;
 	label?: string;
-	datetime?: string; // ISO 8601 for "at"
-	intervalSeconds?: number; // for "every"
-	expression?: string; // cron expr for "cron"
-	timezone?: string; // IANA timezone for "cron"
+	datetime?: string;
+	intervalSeconds?: number;
+	expression?: string;
+	timezone?: string;
 	createdAt: string;
+}
+
+interface ChatJobs {
+	contactId: string;
+	jobsPath: string;
+	jobs: CronJob[];
 }
 
 type FireCallback = (contactId: string, message: string) => Promise<void>;
 
 // ── Persistence ──────────────────────────────────────
 
-const jobsPath = join(dataDir, "jobs.json");
-
-function loadJobs(): CronJob[] {
+function loadJobsFile(jobsPath: string): CronJob[] {
 	if (!existsSync(jobsPath)) return [];
 	try {
 		return JSON.parse(readFileSync(jobsPath, "utf-8"));
@@ -38,13 +41,17 @@ function loadJobs(): CronJob[] {
 	}
 }
 
-function saveJobs() {
+function saveJobsFile(jobsPath: string, jobs: CronJob[]) {
+	if (jobs.length === 0) {
+		if (existsSync(jobsPath)) unlinkSync(jobsPath);
+		return;
+	}
 	writeFileSync(jobsPath, `${JSON.stringify(jobs, null, "\t")}\n`);
 }
 
 // ── Scheduler ────────────────────────────────────────
 
-let jobs: CronJob[] = [];
+const allChats: ChatJobs[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 let fireCallback: FireCallback | null = null;
 
@@ -83,22 +90,22 @@ function scheduleNext() {
 		timer = null;
 	}
 
-	if (jobs.length === 0) return;
+	let earliest: { chat: ChatJobs; job: CronJob; time: Date } | null = null;
 
-	let earliest: { job: CronJob; time: Date } | null = null;
-
-	for (const job of jobs) {
-		const next = getNextFireTime(job);
-		if (next && (!earliest || next < earliest.time)) {
-			earliest = { job, time: next };
+	for (const chat of allChats) {
+		for (const job of chat.jobs) {
+			const next = getNextFireTime(job);
+			if (next && (!earliest || next < earliest.time)) {
+				earliest = { chat, job, time: next };
+			}
 		}
 	}
 
 	if (!earliest) return;
 
-	const MAX_DELAY = 2_147_483_647; // 2^31 - 1, setTimeout overflows beyond this
+	const MAX_DELAY = 2_147_483_647;
 	const delay = Math.min(MAX_DELAY, Math.max(0, earliest.time.getTime() - Date.now()));
-	const { job } = earliest;
+	const { chat, job } = earliest;
 
 	timer = setTimeout(async () => {
 		timer = null;
@@ -106,16 +113,15 @@ function scheduleNext() {
 
 		if (fireCallback) {
 			try {
-				await fireCallback(job.contactId, job.message);
+				await fireCallback(chat.contactId, job.message);
 			} catch (err) {
 				console.error(`Cron fire error [${job.id}]:`, err);
 			}
 		}
 
-		// Remove one-shot jobs
 		if (job.type === "at") {
-			jobs = jobs.filter((j) => j.id !== job.id);
-			saveJobs();
+			chat.jobs = chat.jobs.filter((j) => j.id !== job.id);
+			saveJobsFile(chat.jobsPath, chat.jobs);
 		}
 
 		scheduleNext();
@@ -124,35 +130,39 @@ function scheduleNext() {
 
 // ── Public API ───────────────────────────────────────
 
+function getChatEntry(contactId: string, jobsPath: string): ChatJobs {
+	let chat = allChats.find((c) => c.contactId === contactId);
+	if (!chat) {
+		chat = { contactId, jobsPath, jobs: loadJobsFile(jobsPath) };
+		allChats.push(chat);
+	}
+	return chat;
+}
+
 export function startCron(callback: FireCallback) {
 	fireCallback = callback;
-	jobs = loadJobs();
-	// Purge expired one-shot jobs (e.g. process was down when they should have fired)
-	const before = jobs.length;
-	jobs = jobs.filter((j) => !(j.type === "at" && j.datetime && new Date(j.datetime) <= new Date()));
-	if (jobs.length < before) saveJobs();
-	console.log(`⏰ Cron started with ${jobs.length} job(s)`);
-	scheduleNext();
-}
 
-function addJob(job: CronJob): CronJob {
-	jobs.push(job);
-	saveJobs();
-	scheduleNext();
-	return job;
-}
+	if (existsSync(config.chatsDir)) {
+		for (const entry of readdirSync(config.chatsDir)) {
+			const entryPath = join(config.chatsDir, entry);
+			if (!statSync(entryPath).isDirectory()) continue;
 
-function removeJob(id: string): boolean {
-	const before = jobs.length;
-	jobs = jobs.filter((j) => j.id !== id);
-	if (jobs.length === before) return false;
-	saveJobs();
-	scheduleNext();
-	return true;
-}
+			const jobsPath = join(entryPath, "jobs.json");
+			if (!existsSync(jobsPath)) continue;
 
-function listJobs(contactId: string): CronJob[] {
-	return jobs.filter((j) => j.contactId === contactId);
+			const contactId = contactIdFromDirName(entry);
+			const chat = getChatEntry(contactId, jobsPath);
+
+			// Purge expired one-shot jobs
+			const before = chat.jobs.length;
+			chat.jobs = chat.jobs.filter((j) => !(j.type === "at" && j.datetime && new Date(j.datetime) <= new Date()));
+			if (chat.jobs.length < before) saveJobsFile(chat.jobsPath, chat.jobs);
+		}
+	}
+
+	const totalJobs = allChats.reduce((sum, c) => sum + c.jobs.length, 0);
+	console.log(`⏰ Cron started with ${totalJobs} job(s) across ${allChats.length} chat(s)`);
+	scheduleNext();
 }
 
 // ── Tool ─────────────────────────────────────────────
@@ -190,7 +200,7 @@ function textResult(text: string) {
 	return { content: [{ type: "text" as const, text }], details: {} };
 }
 
-export function createCronTool(contactId: string): ToolDefinition {
+export function createCronTool(contactId: string, jobsPath: string): ToolDefinition {
 	return {
 		name: "cron",
 		label: "Cron",
@@ -199,18 +209,20 @@ export function createCronTool(contactId: string): ToolDefinition {
 		promptSnippet: "cron — schedule jobs (reminders, recurring tasks, cron expressions)",
 		parameters: cronParams,
 		async execute(_toolCallId, params: CronParams) {
+			const chat = getChatEntry(contactId, jobsPath);
+
 			if (params.action === "list") {
-				const mine = listJobs(contactId);
-				if (mine.length === 0) return textResult("No scheduled jobs.");
-				return textResult(mine.map(formatJob).join("\n"));
+				if (chat.jobs.length === 0) return textResult("No scheduled jobs.");
+				return textResult(chat.jobs.map(formatJob).join("\n"));
 			}
 
 			if (params.action === "remove") {
 				if (!params.id) return textResult("Error: id is required for remove.");
-				// Only allow removing own jobs
-				const job = jobs.find((j) => j.id === params.id && j.contactId === contactId);
+				const job = chat.jobs.find((j) => j.id === params.id);
 				if (!job) return textResult(`No job found with id "${params.id}".`);
-				removeJob(params.id);
+				chat.jobs = chat.jobs.filter((j) => j.id !== params.id);
+				saveJobsFile(chat.jobsPath, chat.jobs);
+				scheduleNext();
 				return textResult(`Removed job ${params.id}.`);
 			}
 
@@ -239,9 +251,8 @@ export function createCronTool(contactId: string): ToolDefinition {
 					}
 				}
 
-				const job = addJob({
+				const job: CronJob = {
 					id: genId(),
-					contactId,
 					type: params.type,
 					message: params.message,
 					label: params.label,
@@ -250,7 +261,10 @@ export function createCronTool(contactId: string): ToolDefinition {
 					expression: params.expression,
 					timezone: params.timezone,
 					createdAt: new Date().toISOString(),
-				});
+				};
+				chat.jobs.push(job);
+				saveJobsFile(chat.jobsPath, chat.jobs);
+				scheduleNext();
 
 				return textResult(`Created job: ${formatJob(job)}`);
 			}

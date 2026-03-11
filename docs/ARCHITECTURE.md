@@ -54,10 +54,10 @@ Agent-managed job scheduler. Three schedule types:
 - **`cron`** — Standard cron expressions with optional timezone (e.g. `0 9 * * 1-5 Europe/Zurich`).
 
 ```
-~/.navi/jobs.json
+~/.navi/chats/<chat>/jobs.json
 ```
 
-Jobs are persisted as JSON. The agent creates, lists, and removes jobs via a `cron` tool. When a job fires, its message is injected into the agent loop as if the user sent it — the agent processes it, and the response is delivered to the configured channel.
+Jobs are persisted as JSON per chat. The agent creates, lists, and removes jobs via a `cron` tool. When a job fires, its message is injected into the agent loop — the agent processes it, and the response is delivered to the chat.
 
 Example jobs:
 - "Remind me to call mom at 6pm" → `at` job
@@ -116,7 +116,6 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
   settings.json              ← user config
   soul.md                    ← personality override (optional, falls back to built-in default)
   whatsapp-auth/             ← Baileys session
-  jobs.json                  ← cron jobs (global, jobs tagged with contactId)
   chats/
     s_491234567890/           ← individual DM (JID → dir name)
       workspace/              ← agent cwd
@@ -126,6 +125,7 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
       MEMORY.md               ← long-term facts (in prompt)
       HISTORY.md              ← event log (grep-only)
       HEARTBEAT.md            ← periodic task list
+      jobs.json               ← cron jobs for this chat
       SOUL.md                 ← per-chat personality (optional)
     g_120363012345678901/     ← group chat (same structure)
       ...
