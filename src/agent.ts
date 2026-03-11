@@ -1,6 +1,6 @@
 // agent.ts — Navi session management, one session per contact
 
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import {
 	AuthStorage,
 	codingTools,
@@ -91,9 +91,10 @@ async function getSession(contactId: string) {
 		skills: config.skills,
 	});
 
+	const soul = existsSync(paths.soul) ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
+	const basePrompt = soul ? `${soul}\n\n${config.systemPrompt}` : config.systemPrompt;
 	const outboxPrompt = `\n\nTo send files back: write them to the outbox directory at ${paths.outbox}/ and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`;
-	const systemPrompt =
-		config.systemPrompt + outboxPrompt + getMemoryPrompt(paths.memory) + getHeartbeatPrompt(paths.heartbeat);
+	const systemPrompt = basePrompt + outboxPrompt + getMemoryPrompt(paths.memory) + getHeartbeatPrompt(paths.heartbeat);
 
 	const resourceLoader = new DefaultResourceLoader({
 		cwd: paths.workspace,

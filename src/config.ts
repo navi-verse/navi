@@ -101,14 +101,9 @@ function loadSoul(): string {
 	return "";
 }
 
-function loadSystemPrompt(): string {
-	const soul = loadSoul();
-	return soul ? `${soul}\n\n${settings.systemPrompt}` : settings.systemPrompt;
-}
-
 export const config = {
 	...settings,
-	systemPrompt: loadSystemPrompt(),
+	soul: loadSoul(),
 	chatsDir: join(dataDir, "chats"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };
@@ -123,6 +118,7 @@ export interface ChatPaths {
 	session: string;
 	memory: string;
 	heartbeat: string;
+	soul: string;
 }
 
 /** Convert a WhatsApp JID to a filesystem-safe directory name */
@@ -154,5 +150,6 @@ export function getChatPaths(contactId: string): ChatPaths {
 		session: join(root, "session"),
 		memory: join(root, "memory"),
 		heartbeat: join(root, "HEARTBEAT.md"),
+		soul: join(root, "SOUL.md"),
 	};
 }
