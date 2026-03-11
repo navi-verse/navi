@@ -93,7 +93,7 @@ The heartbeat is for recurring/situational checks. Cron is for time-specific tri
 
 ---
 
-### Per-Contact Isolation
+### Per-Chat Isolation
 
 Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own session, memory, heartbeat, and cron jobs — fully isolated by default. This maps naturally to WhatsApp's JID scheme: DMs are private, groups are shared.
 
@@ -140,7 +140,7 @@ src/
   channel.ts      ← ChannelContext interface, handleMessage(), commands
   agent.ts        ← per-chat session management, chat()
   whatsapp.ts     ← Baileys transport, per-chat media + outbox
-  memory.ts       ← two-layer memory: MEMORY.md + HISTORY.md (parameterized)
+  memory.ts       ← two-layer memory: MEMORY.md + HISTORY.md
   cron.ts         ← job scheduler: at/every/cron + agent tool
   heartbeat.ts    ← periodic pulse: scans all chats for HEARTBEAT.md
 ```

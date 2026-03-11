@@ -26,7 +26,7 @@ src/
   config.ts     — Settings, per-chat path helpers (getChatPaths, getChatDirName)
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
-  memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md (parameterized by dir)
+  memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md
   cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
   heartbeat.ts  — Periodic task pulse: scans all chats for HEARTBEAT.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat

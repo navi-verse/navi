@@ -1,13 +1,12 @@
 // heartbeat.ts — Periodic task pulse: reads HEARTBEAT.md, sends to agent if actionable
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { config, contactIdFromDirName } from "./config";
 
-export function initHeartbeat(heartbeatPath: string) {
-	mkdirSync(join(heartbeatPath, ".."), { recursive: true });
-	if (!existsSync(heartbeatPath)) {
-		writeFileSync(heartbeatPath, "# Heartbeat\n\n(Add tasks here for Navi to check periodically. One per line.)\n");
+export function initHeartbeat(heartbeat: string) {
+	if (!existsSync(heartbeat)) {
+		writeFileSync(heartbeat, "# Heartbeat\n\n(Add tasks here for Navi to check periodically. One per line.)\n");
 	}
 }
 
@@ -20,9 +19,9 @@ function hasRealTasks(content: string): boolean {
 	});
 }
 
-export function getHeartbeatPrompt(heartbeatPath: string): string {
+export function getHeartbeatPrompt(heartbeat: string): string {
 	return `
-You have a heartbeat task list at ${heartbeatPath}.
+You have a heartbeat task list at ${heartbeat}.
 This file is checked periodically and sent to you for action. You can add tasks to it
 during normal conversation when the user asks you to do something later or on a schedule.
 Keep entries concise with clear actionable descriptions.`;
