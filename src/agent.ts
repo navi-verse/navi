@@ -1,6 +1,7 @@
 // agent.ts — Navi session management, one session per contact
 
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import {
 	AuthStorage,
 	codingTools,
@@ -14,7 +15,7 @@ import {
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
 import type { ImageAttachment } from "./channel";
-import { config, getChatPaths } from "./config";
+import { config, dataDir, getChatPaths } from "./config";
 import { createCronTool } from "./cron";
 import { initHeartbeat } from "./heartbeat";
 import { initMemory, loadMemory } from "./memory";
@@ -32,7 +33,7 @@ export function getAuthStorage(): AuthStorage {
 }
 
 export function initAgent() {
-	authStorage = AuthStorage.create();
+	authStorage = AuthStorage.create(join(dataDir, "auth.json"));
 	modelRegistry = new ModelRegistry(authStorage);
 
 	mkdirSync(config.chatsDir, { recursive: true });
