@@ -15,6 +15,7 @@ import pino from "pino";
 import qrcode from "qrcode-terminal";
 import type { ChannelContext, ImageAttachment } from "./channel";
 import { config, getChatPaths } from "./config";
+import { transcribe } from "./stt";
 
 export type MessageHandler = (
 	contactId: string,
@@ -151,7 +152,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 		}
 	}
 
-	// Audio / voice note — save to disk, describe in text
+	// Audio / voice note — save to disk, transcribe, describe in text
 	if (m.audioMessage) {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
@@ -162,8 +163,16 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			writeFileSync(filePath, buffer);
 			const label = isVoice ? "Voice note" : "Audio";
 			const sizeKb = Math.round(buffer.length / 1024);
-			const desc = `[${label} received: ${filePath} (${sizeKb} KB)]`;
+
+			const transcript = await transcribe(filePath);
+			const parts = [`[${label}: ${filePath} (${sizeKb} KB)]`];
+			if (transcript) {
+				parts.push(`[Transcription: ${transcript}]`);
+				console.log(`🎤 ${label.toLowerCase()}: ${transcript.substring(0, 80)}`);
+			}
 			console.log(`🎵 ${label.toLowerCase()}: ${filePath}`);
+
+			const desc = parts.join("\n");
 			return { text: text ? `${desc}\n${text}` : desc, images };
 		} catch (err) {
 			console.error("Failed to download audio:", err);
