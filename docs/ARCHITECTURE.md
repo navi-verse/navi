@@ -37,7 +37,7 @@ Two plain files per chat. No embeddings, no vector DB.
   HISTORY.md    ← timestamped event log, grep-searchable
 ```
 
-**MEMORY.md** — Small, curated. User preferences, project context, relationships, ongoing commitments. Always injected into the system prompt so the agent has it every turn. The agent updates it directly via `edit`/`write`.
+**MEMORY.md** — Small, curated. Personal preferences, project context, relationships, ongoing commitments. Always injected into the system prompt so the agent has it every turn. The agent updates it directly via `edit`/`write`.
 
 **HISTORY.md** — Timestamped summaries of noteworthy interactions. Never loaded into prompt — only accessed on demand when the agent greps for past events. The agent appends entries itself when something worth remembering happens. Format: `[YYYY-MM-DD HH:MM] 2-5 sentence summary`.
 
@@ -137,10 +137,11 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
 src/
   index.ts        ← entry point, bootstraps everything
   config.ts       ← settings, per-chat path helpers (getChatPaths, getChatDirName)
+  prompts.ts      ← all prompt text: soul, system prompt, heartbeat check
   channel.ts      ← ChannelContext interface, handleMessage(), commands
   agent.ts        ← per-chat session management, chat()
   whatsapp.ts     ← Baileys transport, per-chat media + outbox
-  memory.ts       ← two-layer memory: MEMORY.md + HISTORY.md
+  memory.ts       ← memory file seeding (MEMORY.md + HISTORY.md) and loading
   cron.ts         ← job scheduler: at/every/cron + agent tool
   heartbeat.ts    ← periodic pulse: scans all chats for HEARTBEAT.md
 ```

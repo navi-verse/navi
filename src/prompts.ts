@@ -59,7 +59,7 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		"",
 		`You have a heartbeat task list at ${opts.heartbeat}.`,
 		"This file is checked periodically and sent to you for action.",
-		"You can add tasks to it when you're asked to do something later or on a schedule.",
+		"Add tasks here for things to follow up on later or check on a schedule.",
 		"Keep entries concise with clear actionable descriptions.",
 	];
 	if (opts.memoryContent) {

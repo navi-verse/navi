@@ -7,11 +7,11 @@ import { heartbeatCheckPrompt } from "./prompts";
 
 export function initHeartbeat(heartbeat: string) {
 	if (!existsSync(heartbeat)) {
-		writeFileSync(heartbeat, "# Heartbeat\n\n(Add tasks here for Navi to check periodically. One per line.)\n");
+		writeFileSync(heartbeat, "# Heartbeat\n\n(Tasks to check periodically. One per line.)\n");
 	}
 }
 
-const templateLine = "(Add tasks here for Navi to check periodically. One per line.)";
+const templateLine = "(Tasks to check periodically. One per line.)";
 
 function hasRealTasks(content: string): boolean {
 	return content.split("\n").some((line) => {
