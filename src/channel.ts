@@ -81,6 +81,13 @@ export async function handleMessage(
 	const start = Date.now();
 	const response = await chat(contactId, text, images);
 	const duration = ((Date.now() - start) / 1000).toFixed(1);
+
+	if (response === "[skip]") {
+		console.log(`⏭️ ${contactId} (${duration}s): skipped`);
+		await ctx.stopTyping();
+		return;
+	}
+
 	const logPreview = response.replace(/\n/g, " ").substring(0, 80);
 	console.log(`🤖 ${contactId} (${duration}s): ${logPreview}${response.length > 80 ? "..." : ""}`);
 

@@ -35,6 +35,7 @@ interface BuildSystemPromptOptions {
 	history: string;
 	heartbeat: string;
 	memoryContent: string;
+	isGroup?: boolean;
 }
 
 export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
@@ -68,6 +69,31 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		"- Quotes: > text",
 		"- No markdown headers, links, or tables — they won't render.",
 	];
+	if (opts.isGroup) {
+		lines.push(
+			"",
+			"Group chat rules:",
+			"- Messages arrive as [Name]: text — this tells you who's speaking.",
+			"- Always attribute information to the person who said it.",
+			'- In memory and history, always record who said or requested something (e.g. "Alice prefers dark mode", "[2025-03-11 14:00] Bob asked to set up a reminder").',
+			"- Never mix up or merge preferences/facts between participants.",
+			"",
+			"When to speak:",
+			"- Directly mentioned or asked a question.",
+			"- You can add genuine value — info, insight, or help.",
+			"- Correcting important misinformation.",
+			"- Something witty fits naturally.",
+			"",
+			'When to stay silent — respond with exactly "[skip]":',
+			"- Casual banter between people.",
+			"- Someone already answered the question.",
+			'- Your response would just be "yeah", "nice", or similarly low-value.',
+			"- The conversation is flowing fine without you.",
+			"- Adding a message would interrupt the vibe.",
+			"",
+			"Think like a human in a group chat: don't respond to every message. Quality > quantity. Participate, don't dominate.",
+		);
+	}
 	if (opts.memoryContent) {
 		lines.push("", `Your long-term memory (from ${opts.memory}):`, "", opts.memoryContent);
 	}
