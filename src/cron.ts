@@ -109,19 +109,20 @@ function scheduleNext() {
 
 	timer = setTimeout(async () => {
 		timer = null;
-		console.log(`⏰ Cron firing: [${job.id}] ${job.label || job.message.substring(0, 40)}`);
 
-		if (fireCallback) {
-			try {
+		try {
+			console.log(`⏰ Cron firing: [${job.id}] ${job.label || job.message.substring(0, 40)}`);
+
+			if (fireCallback) {
 				await fireCallback(chat.contactId, job.message);
-			} catch (err) {
-				console.error(`Cron fire error [${job.id}]:`, err);
 			}
-		}
 
-		if (job.type === "at") {
-			chat.jobs = chat.jobs.filter((j) => j.id !== job.id);
-			saveJobsFile(chat.jobsPath, chat.jobs);
+			if (job.type === "at") {
+				chat.jobs = chat.jobs.filter((j) => j.id !== job.id);
+				saveJobsFile(chat.jobsPath, chat.jobs);
+			}
+		} catch (err) {
+			console.error(`Cron error [${job.id}]:`, err);
 		}
 
 		scheduleNext();
