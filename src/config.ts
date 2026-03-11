@@ -17,7 +17,13 @@ interface RetrySettings {
 
 type PackageSource =
 	| string
-	| { source: string; extensions?: string[]; skills?: string[]; prompts?: string[]; themes?: string[] };
+	| {
+			source: string;
+			extensions?: string[];
+			skills?: string[];
+			prompts?: string[];
+			themes?: string[];
+	  };
 
 interface NaviSettings {
 	allowedJids: string[];
@@ -66,7 +72,10 @@ function loadSettings(): NaviSettings {
 	mkdirSync(dataDir, { recursive: true });
 
 	if (!existsSync(settingsPath)) {
-		const minimal = { allowedJids: [] as string[], model: "anthropic/claude-sonnet-4-6" };
+		const minimal = {
+			allowedJids: [] as string[],
+			model: "anthropic/claude-sonnet-4-6",
+		};
 		writeFileSync(settingsPath, `${JSON.stringify(minimal, null, "\t")}\n`);
 		return defaults;
 	}
@@ -103,4 +112,5 @@ export const config = {
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 	mediaDir: join(settings.agentCwd, "media"),
 	outboxDir: join(settings.agentCwd, "outbox"),
+	memoryDir: join(settings.agentCwd, "memory"),
 };

@@ -12,6 +12,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import type { ImageAttachment } from "./channel";
 import { config } from "./config";
+import { appendHistory, getMemoryPrompt, initMemory } from "./memory";
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -30,6 +31,7 @@ export function initAgent() {
 
 	mkdirSync(config.agentCwd, { recursive: true });
 	mkdirSync(config.sessionsDir, { recursive: true });
+	initMemory();
 
 	// Resolve model — either explicit or auto-pick from first logged-in provider
 	if (!config.model) {
@@ -81,10 +83,11 @@ async function getSession(contactId: string) {
 		skills: config.skills,
 	});
 
+	const systemPrompt = config.systemPrompt + getMemoryPrompt();
 	const resourceLoader = new DefaultResourceLoader({
 		cwd: config.agentCwd,
 		settingsManager,
-		systemPrompt: config.systemPrompt,
+		systemPrompt,
 	});
 	await resourceLoader.reload();
 
@@ -124,7 +127,9 @@ export async function chat(contactId: string, userMessage: string, images?: Imag
 		unsubscribe();
 	}
 
-	return response.trim() || "(no response)";
+	const trimmed = response.trim() || "(no response)";
+	appendHistory(userMessage, trimmed);
+	return trimmed;
 }
 
 /**
