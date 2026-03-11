@@ -4,8 +4,12 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import {
 	AuthStorage,
+	codingTools,
 	createAgentSession,
 	DefaultResourceLoader,
+	findTool,
+	grepTool,
+	lsTool,
 	ModelRegistry,
 	SessionManager,
 	SettingsManager,
@@ -98,6 +102,7 @@ async function getSession(contactId: string) {
 		settingsManager,
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(config.agentCwd, sessionDir),
+		tools: [...codingTools, grepTool, findTool, lsTool],
 	});
 
 	sessions.set(contactId, result);
