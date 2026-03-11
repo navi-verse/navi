@@ -101,6 +101,7 @@ async function getSession(contactId: string) {
 		history: paths.history,
 		heartbeat: paths.heartbeat,
 		memoryContent: loadMemory(paths.memory),
+		isGroup: contactId.endsWith("@g.us"),
 	});
 
 	const resourceLoader = new DefaultResourceLoader({
