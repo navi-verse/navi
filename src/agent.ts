@@ -136,9 +136,20 @@ export async function chat(contactId: string, userMessage: string, images?: Imag
 
 	// Collect the streamed response
 	let response = "";
+	const toolTimers = new Map<string, number>();
 	const unsubscribe = session.subscribe((event) => {
 		if (event.type === "message_update" && event.assistantMessageEvent.type === "text_delta") {
 			response += event.assistantMessageEvent.delta;
+		} else if (event.type === "tool_execution_start") {
+			toolTimers.set(event.toolCallId, Date.now());
+			const args = JSON.stringify(event.args).substring(0, 200);
+			console.log(`🔧 ${contactId} → ${event.toolName} ${args}`);
+		} else if (event.type === "tool_execution_end") {
+			const started = toolTimers.get(event.toolCallId);
+			const duration = started ? `${((Date.now() - started) / 1000).toFixed(1)}s` : "";
+			toolTimers.delete(event.toolCallId);
+			const status = event.isError ? "❌" : "✅";
+			console.log(`${status} ${contactId} ← ${event.toolName} ${duration}`);
 		}
 	});
 
