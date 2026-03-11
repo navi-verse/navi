@@ -120,6 +120,6 @@ src/
   agent.ts        ← Pi SDK session management, chat()
   whatsapp.ts     ← Baileys transport, media handling
   memory.ts       ← two-layer memory: MEMORY.md + HISTORY.md
-  cron.ts         ← CronService: scheduler + job tool    [planned]
+  cron.ts         ← job scheduler: at/every/cron + agent tool
   heartbeat.ts    ← HeartbeatService: periodic pulse     [planned]
 ```

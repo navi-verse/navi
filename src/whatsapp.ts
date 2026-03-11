@@ -25,6 +25,12 @@ export type MessageHandler = (
 
 const logger = pino({ level: "error" });
 
+const socketRef: { current: WASocket | null } = { current: null };
+
+export function getSocket(): WASocket | null {
+	return socketRef.current;
+}
+
 // libsignal spams console.info with "Closing session:" dumps — suppress them
 const _origInfo = console.info;
 console.info = (...args: unknown[]) => {
@@ -224,6 +230,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 		logger,
 		browser: Browsers.ubuntu("Navi"),
 	});
+	socketRef.current = sock;
 
 	sock.ev.on("creds.update", saveCreds);
 
@@ -329,7 +336,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 }
 
 /** Split long messages into WhatsApp-friendly chunks */
-function splitMessage(text: string, maxLen: number): string[] {
+export function splitMessage(text: string, maxLen: number): string[] {
 	if (text.length <= maxLen) return [text];
 
 	const chunks: string[] = [];

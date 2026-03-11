@@ -16,6 +16,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import type { ImageAttachment } from "./channel";
 import { config } from "./config";
+import { createCronTool } from "./cron";
 import { getMemoryPrompt, initMemory } from "./memory";
 
 // Stores active sessions keyed by contact ID
@@ -103,6 +104,7 @@ async function getSession(contactId: string) {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(config.workspaceDir, sessionDir),
 		tools: [...codingTools, grepTool, findTool, lsTool],
+		customTools: [createCronTool(contactId)],
 	});
 
 	sessions.set(contactId, result);

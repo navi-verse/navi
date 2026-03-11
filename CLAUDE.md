@@ -27,6 +27,7 @@ src/
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Session management, chat(), abortSession(), resetSession()
   memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md
+  cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
   whatsapp.ts   — Baileys WhatsApp transport
 ```
 

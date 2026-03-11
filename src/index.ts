@@ -1,8 +1,9 @@
 // index.ts — Main entry point
 
-import { initAgent } from "./agent";
+import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
-import { connectWhatsApp } from "./whatsapp";
+import { startCron } from "./cron";
+import { connectWhatsApp, getSocket, splitMessage } from "./whatsapp";
 
 async function main() {
 	console.log("╔══════════════════════════════════════╗");
@@ -12,6 +13,16 @@ async function main() {
 	initAgent();
 
 	await connectWhatsApp(handleMessage);
+
+	startCron(async (contactId, message) => {
+		const response = await chat(contactId, message);
+		const sock = getSocket();
+		if (!sock) return;
+		const chunks = splitMessage(response, 4000);
+		for (const chunk of chunks) {
+			await sock.sendMessage(contactId, { text: chunk });
+		}
+	});
 }
 
 main().catch((err) => {
