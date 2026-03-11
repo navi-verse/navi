@@ -1,4 +1,4 @@
-// config.ts — Loads settings from ~/.navi/settings.json with defaults
+// config.ts — Settings + per-chat path helpers
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -123,7 +123,7 @@ export interface ChatPaths {
 }
 
 /** Convert a WhatsApp JID to a filesystem-safe directory name */
-export function getChatDirName(contactId: string): string {
+function getChatDirName(contactId: string): string {
 	// 491234567890@s.whatsapp.net → s_491234567890
 	// 120363012345678901@g.us     → g_120363012345678901
 	const [local, domain] = contactId.split("@");

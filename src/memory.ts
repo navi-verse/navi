@@ -8,7 +8,7 @@ export function initMemory(memory: string, history: string) {
 	if (!existsSync(history)) writeFileSync(history, "# History\n\n(Timestamped summaries of past interactions.)\n");
 }
 
-export function loadMemory(memory: string): string {
+function loadMemory(memory: string): string {
 	if (!existsSync(memory)) return "";
 	return readFileSync(memory, "utf-8").trim();
 }
