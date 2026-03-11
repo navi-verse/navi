@@ -23,13 +23,13 @@ To add a new channel: create a transport that produces a `ChannelContext`, wire 
 ```
 src/
   index.ts      — Entry point, bootstraps agent + transports
-  config.ts     — Loads ~/.navi/settings.json with defaults
+  config.ts     — Settings, per-chat path helpers (getChatPaths, getChatDirName)
   channel.ts    — ChannelContext interface, handleMessage(), commands
-  agent.ts      — Session management, chat(), abortSession(), resetSession()
-  memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md
+  agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
+  memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md (parameterized by dir)
   cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
-  heartbeat.ts  — Periodic task pulse: HEARTBEAT.md → agent → deliver
-  whatsapp.ts   — Baileys WhatsApp transport
+  heartbeat.ts  — Periodic task pulse: scans all chats for HEARTBEAT.md
+  whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
 ```
 
 ## Key concepts

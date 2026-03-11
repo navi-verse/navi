@@ -27,7 +27,6 @@ type PackageSource =
 
 interface NaviSettings {
 	allowedJids: string[];
-	workspaceDir: string;
 	systemPrompt: string;
 	model?: string;
 	defaultModels: Record<string, string>;
@@ -40,20 +39,15 @@ interface NaviSettings {
 	packages?: PackageSource[];
 	extensions: string[];
 	skills: string[];
-	heartbeatContactId?: string;
 	heartbeatIntervalSeconds?: number;
 }
-
-const outboxDir = join(dataDir, "workspace/outbox/");
 
 const defaultSystemPrompt = `You are Navi, a helpful personal assistant.
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
 If the user asks you to do something on the computer, you have shell access via bash.
 
-Media: Images sent to you are visible — you can see and describe them. Other media (audio, video, documents) are saved to disk and you'll see the file path. You can read/process these files via shell.
-
-To send files back: write them to the outbox directory at ${outboxDir} and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`;
+Media: Images sent to you are visible — you can see and describe them. Other media (audio, video, documents) are saved to disk and you'll see the file path. You can read/process these files via shell.`;
 
 const defaultModels: Record<string, string> = {
 	anthropic: "anthropic/claude-sonnet-4-6",
@@ -65,7 +59,6 @@ const defaultModels: Record<string, string> = {
 
 const defaults: NaviSettings = {
 	allowedJids: [],
-	workspaceDir: join(dataDir, "workspace"),
 	systemPrompt: defaultSystemPrompt,
 	defaultModels,
 	thinkingLevel: "low",
@@ -116,9 +109,50 @@ function loadSystemPrompt(): string {
 export const config = {
 	...settings,
 	systemPrompt: loadSystemPrompt(),
-	sessionsDir: join(dataDir, "sessions"),
+	chatsDir: join(dataDir, "chats"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
-	mediaDir: join(settings.workspaceDir, "media"),
-	outboxDir: join(settings.workspaceDir, "outbox"),
-	memoryDir: join(settings.workspaceDir, "memory"),
 };
+
+// ── Per-chat directory helpers ───────────────────────
+
+export interface ChatPaths {
+	root: string;
+	workspace: string;
+	media: string;
+	outbox: string;
+	session: string;
+	memory: string;
+	heartbeat: string;
+}
+
+/** Convert a WhatsApp JID to a filesystem-safe directory name */
+export function getChatDirName(contactId: string): string {
+	// 491234567890@s.whatsapp.net → s_491234567890
+	// 120363012345678901@g.us     → g_120363012345678901
+	const [local, domain] = contactId.split("@");
+	const prefix = domain === "g.us" ? "g" : "s";
+	return `${prefix}_${local}`;
+}
+
+/** Reverse of getChatDirName */
+export function contactIdFromDirName(dirName: string): string {
+	const prefix = dirName.charAt(0);
+	const local = dirName.slice(2);
+	const domain = prefix === "g" ? "g.us" : "s.whatsapp.net";
+	return `${local}@${domain}`;
+}
+
+/** Get all per-chat paths for a given contact */
+export function getChatPaths(contactId: string): ChatPaths {
+	const root = join(config.chatsDir, getChatDirName(contactId));
+	const workspace = join(root, "workspace");
+	return {
+		root,
+		workspace,
+		media: join(workspace, "media"),
+		outbox: join(workspace, "outbox"),
+		session: join(root, "session"),
+		memory: join(root, "memory"),
+		heartbeat: join(root, "HEARTBEAT.md"),
+	};
+}

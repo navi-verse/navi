@@ -2,9 +2,10 @@
 
 import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
+import { getChatPaths } from "./config";
 import { startCron } from "./cron";
 import { startHeartbeat } from "./heartbeat";
-import { connectWhatsApp, getSocket, splitMessage } from "./whatsapp";
+import { connectWhatsApp, getSocket, sendOutboxFiles, splitMessage } from "./whatsapp";
 
 async function main() {
 	console.log("╔══════════════════════════════════════╗");
@@ -23,6 +24,7 @@ async function main() {
 		for (const chunk of chunks) {
 			await sock.sendMessage(contactId, { text: chunk });
 		}
+		await sendOutboxFiles(sock, contactId, getChatPaths(contactId).outbox);
 	});
 
 	startHeartbeat(async (contactId, prompt) => {
@@ -34,6 +36,7 @@ async function main() {
 		for (const chunk of chunks) {
 			await sock.sendMessage(contactId, { text: chunk });
 		}
+		await sendOutboxFiles(sock, contactId, getChatPaths(contactId).outbox);
 	});
 }
 

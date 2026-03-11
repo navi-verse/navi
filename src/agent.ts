@@ -1,7 +1,6 @@
 // agent.ts — Navi session management, one session per contact
 
 import { mkdirSync } from "node:fs";
-import { join } from "node:path";
 import {
 	AuthStorage,
 	codingTools,
@@ -15,7 +14,7 @@ import {
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
 import type { ImageAttachment } from "./channel";
-import { config } from "./config";
+import { config, getChatPaths } from "./config";
 import { createCronTool } from "./cron";
 import { getHeartbeatPrompt, initHeartbeat } from "./heartbeat";
 import { getMemoryPrompt, initMemory } from "./memory";
@@ -35,10 +34,7 @@ export function initAgent() {
 	authStorage = AuthStorage.create();
 	modelRegistry = new ModelRegistry(authStorage);
 
-	mkdirSync(config.workspaceDir, { recursive: true });
-	mkdirSync(config.sessionsDir, { recursive: true });
-	initMemory();
-	initHeartbeat();
+	mkdirSync(config.chatsDir, { recursive: true });
 
 	// Resolve model — either explicit or auto-pick from first logged-in provider
 	if (!config.model) {
@@ -58,7 +54,7 @@ export function initAgent() {
 
 /**
  * Get or create a Navi session for a contact.
- * Each contact gets their own isolated session with its own history.
+ * Each contact gets their own isolated session with its own workspace, memory, and heartbeat.
  */
 async function getSession(contactId: string) {
 	const existing = sessions.get(contactId);
@@ -66,13 +62,18 @@ async function getSession(contactId: string) {
 		return existing;
 	}
 
-	// Create a per-contact session directory for persistence
-	const dirName = contactId.replace(/[^a-zA-Z0-9]/g, "_");
-	const sessionDir = join(config.sessionsDir, dirName);
+	const paths = getChatPaths(contactId);
 
-	mkdirSync(sessionDir, { recursive: true });
+	// Ensure all per-chat dirs exist
+	mkdirSync(paths.workspace, { recursive: true });
+	mkdirSync(paths.media, { recursive: true });
+	mkdirSync(paths.outbox, { recursive: true });
+	mkdirSync(paths.session, { recursive: true });
 
-	const settingsManager = SettingsManager.create(config.workspaceDir);
+	initMemory(paths.memory);
+	initHeartbeat(paths.heartbeat);
+
+	const settingsManager = SettingsManager.create(paths.workspace);
 	const [defaultProvider, defaultModel] = config.model?.split("/") ?? [];
 
 	settingsManager.applyOverrides({
@@ -90,21 +91,24 @@ async function getSession(contactId: string) {
 		skills: config.skills,
 	});
 
-	const systemPrompt = config.systemPrompt + getMemoryPrompt() + getHeartbeatPrompt();
+	const outboxPrompt = `\n\nTo send files back: write them to the outbox directory at ${paths.outbox}/ and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`;
+	const systemPrompt =
+		config.systemPrompt + outboxPrompt + getMemoryPrompt(paths.memory) + getHeartbeatPrompt(paths.heartbeat);
+
 	const resourceLoader = new DefaultResourceLoader({
-		cwd: config.workspaceDir,
+		cwd: paths.workspace,
 		settingsManager,
 		systemPrompt,
 	});
 	await resourceLoader.reload();
 
 	const result = await createAgentSession({
-		cwd: config.workspaceDir,
+		cwd: paths.workspace,
 		authStorage,
 		modelRegistry,
 		settingsManager,
 		resourceLoader,
-		sessionManager: SessionManager.continueRecent(config.workspaceDir, sessionDir),
+		sessionManager: SessionManager.continueRecent(paths.workspace, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
 		customTools: [createCronTool(contactId)],
 	});

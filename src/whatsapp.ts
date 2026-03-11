@@ -14,7 +14,7 @@ import pino from "pino";
 // @ts-expect-error no types available
 import qrcode from "qrcode-terminal";
 import type { ChannelContext, ImageAttachment } from "./channel";
-import { config } from "./config";
+import { config, getChatPaths } from "./config";
 
 export type MessageHandler = (
 	contactId: string,
@@ -88,7 +88,7 @@ interface ExtractedMedia {
 	images: ImageAttachment[];
 }
 
-async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
+async function extractMedia(msg: WAMessage, mediaDir: string): Promise<ExtractedMedia> {
 	const m = msg.message;
 	if (!m) return { text: "", images: [] };
 
@@ -96,7 +96,7 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 		m.conversation || m.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || "";
 	const images: ImageAttachment[] = [];
 
-	mkdirSync(config.mediaDir, { recursive: true });
+	mkdirSync(mediaDir, { recursive: true });
 
 	const descriptions: string[] = [];
 
@@ -105,7 +105,7 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
 			const mime = m.imageMessage.mimetype || "image/jpeg";
-			const filePath = join(config.mediaDir, `image_${timestamp()}${extForMime(mime)}`);
+			const filePath = join(mediaDir, `image_${timestamp()}${extForMime(mime)}`);
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
 			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
@@ -121,7 +121,7 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
 			const mime = m.stickerMessage.mimetype || "image/webp";
-			const filePath = join(config.mediaDir, `sticker_${timestamp()}${extForMime(mime)}`);
+			const filePath = join(mediaDir, `sticker_${timestamp()}${extForMime(mime)}`);
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
 			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
@@ -139,7 +139,7 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 			const isGif = m.videoMessage.gifPlayback;
 			const mime = m.videoMessage.mimetype || "video/mp4";
 			const prefix = isGif ? "gif" : "video";
-			const filePath = join(config.mediaDir, `${prefix}_${timestamp()}${extForMime(mime)}`);
+			const filePath = join(mediaDir, `${prefix}_${timestamp()}${extForMime(mime)}`);
 			writeFileSync(filePath, buffer);
 			const label = isGif ? "GIF" : "Video";
 			const sizeKb = Math.round(buffer.length / 1024);
@@ -158,7 +158,7 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 			const mime = m.audioMessage.mimetype || "audio/ogg; codecs=opus";
 			const isVoice = m.audioMessage.ptt;
 			const prefix = isVoice ? "voice" : "audio";
-			const filePath = join(config.mediaDir, `${prefix}_${timestamp()}${extForMime(mime)}`);
+			const filePath = join(mediaDir, `${prefix}_${timestamp()}${extForMime(mime)}`);
 			writeFileSync(filePath, buffer);
 			const label = isVoice ? "Voice note" : "Audio";
 			const sizeKb = Math.round(buffer.length / 1024);
@@ -176,7 +176,7 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
 			const mime = m.documentMessage.mimetype || "application/octet-stream";
 			const originalName = m.documentMessage.fileName || `document_${timestamp()}${extForMime(mime)}`;
-			const filePath = join(config.mediaDir, `${timestamp()}_${originalName}`);
+			const filePath = join(mediaDir, `${timestamp()}_${originalName}`);
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
 			const desc = `[Document received: ${filePath} (${sizeKb} KB, ${mime})]`;
@@ -191,12 +191,12 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 	return { text: fullText, images };
 }
 
-async function sendOutboxFiles(sock: WASocket, jid: string): Promise<void> {
-	if (!existsSync(config.outboxDir)) return;
+export async function sendOutboxFiles(sock: WASocket, jid: string, outboxDir: string): Promise<void> {
+	if (!existsSync(outboxDir)) return;
 
-	const files = readdirSync(config.outboxDir);
+	const files = readdirSync(outboxDir);
 	for (const file of files) {
-		const filePath = join(config.outboxDir, file);
+		const filePath = join(outboxDir, file);
 		try {
 			const buffer = readFileSync(filePath);
 			const ext = extname(file).toLowerCase();
@@ -276,7 +276,8 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 				continue;
 			}
 
-			const { text, images } = await extractMedia(msg);
+			const chatPaths = getChatPaths(jid);
+			const { text, images } = await extractMedia(msg, chatPaths.media);
 
 			if (!text.trim() && images.length === 0) continue;
 
@@ -324,7 +325,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			try {
 				const promptText = text || (images.length ? "What is this?" : "");
 				await onMessage(jid, promptText, ctx, images.length ? images : undefined);
-				await sendOutboxFiles(sock, jid);
+				await sendOutboxFiles(sock, jid, chatPaths.outbox);
 			} catch (err) {
 				console.error(`Error handling message from ${jid}:`, err);
 				await ctx.respond("⚠️ Something went wrong processing your message. Try again.");

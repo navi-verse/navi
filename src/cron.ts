@@ -6,7 +6,7 @@ import { join } from "node:path";
 import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
 import { type Static, Type } from "@sinclair/typebox";
 import { Cron } from "croner";
-import { config } from "./config";
+import { dataDir } from "./config";
 
 // ── Types ────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ type FireCallback = (contactId: string, message: string) => Promise<void>;
 
 // ── Persistence ──────────────────────────────────────
 
-const jobsPath = join(config.workspaceDir, "jobs.json");
+const jobsPath = join(dataDir, "jobs.json");
 
 function loadJobs(): CronJob[] {
 	if (!existsSync(jobsPath)) return [];
