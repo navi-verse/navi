@@ -61,6 +61,12 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		"This file is checked periodically and sent to you for action.",
 		"Add tasks here for things to follow up on later or check on a schedule.",
 		"Keep entries concise with clear actionable descriptions.",
+		"",
+		"Text formatting (WhatsApp):",
+		"- *bold* _italic_ ~strikethrough~ `inline code` ```monospace block```",
+		"- Lists: * item or - item or 1. item",
+		"- Quotes: > text",
+		"- No markdown headers, links, or tables — they won't render.",
 	];
 	if (opts.memoryContent) {
 		lines.push("", `Your long-term memory (from ${opts.memory}):`, "", opts.memoryContent);
