@@ -1,6 +1,6 @@
 // agent.ts — Navi session management, one session per contact
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import {
 	AuthStorage,
 	codingTools,
@@ -172,5 +172,11 @@ export async function resetSession(contactId: string): Promise<void> {
 		await existing.session.abort();
 	}
 	sessions.delete(contactId);
+
+	const paths = getChatPaths(contactId);
+	if (existsSync(paths.session)) {
+		rmSync(paths.session, { recursive: true });
+	}
+
 	console.log(`🗑️ Reset session for ${contactId}`);
 }
