@@ -11,6 +11,7 @@ export interface ImageAttachment {
 
 export interface ChannelContext {
 	respond(text: string): Promise<void>;
+	react(emoji: string): Promise<void>;
 	sendMedia(filePath: string, options?: { caption?: string; mimeType?: string }): Promise<void>;
 	setTyping(): Promise<void>;
 	stopTyping(): Promise<void>;
@@ -79,11 +80,18 @@ export async function handleMessage(
 	await ctx.setTyping();
 
 	const start = Date.now();
-	const response = await chat(contactId, text, images);
+	let response = await chat(contactId, text, images);
 	const duration = ((Date.now() - start) / 1000).toFixed(1);
 
-	if (response === "[skip]") {
-		console.log(`⏭️ ${contactId} (${duration}s): skipped`);
+	// Extract reaction if present (e.g. "[react:👍]")
+	const reactMatch = response.match(/\[react:(.+?)\]/);
+	if (reactMatch) {
+		response = response.replace(reactMatch[0], "").trim();
+		await ctx.react(reactMatch[1]);
+	}
+
+	if (!response || response === "[skip]") {
+		console.log(`⏭️ ${contactId} (${duration}s): ${reactMatch ? reactMatch[1] : "skipped"}`);
 		await ctx.stopTyping();
 		return;
 	}

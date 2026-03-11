@@ -300,6 +300,9 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 						await sock.sendMessage(jid, { text: chunk });
 					}
 				},
+				async react(emoji: string) {
+					await sock.sendMessage(jid, { react: { text: emoji, key: msg.key } });
+				},
 				async sendMedia(filePath: string, options?: { caption?: string; mimeType?: string }) {
 					const buffer = readFileSync(filePath);
 					const ext = extname(filePath).toLowerCase();

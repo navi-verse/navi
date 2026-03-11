@@ -68,6 +68,12 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		"- Lists: * item or - item or 1. item",
 		"- Quotes: > text",
 		"- No markdown headers, links, or tables — they won't render.",
+		"",
+		"Reactions:",
+		"- React to messages with [react:emoji] — e.g. [react:👍], [react:❤️], [react:😂].",
+		"- Use reactions to acknowledge without cluttering the chat (👍, ❤️, 🙌, 😂, 🤔, 💡, ✅, 👀).",
+		"- You can react without replying, react and reply, or just reply — whatever fits.",
+		"- One reaction per message max. Pick the one that fits best.",
 	];
 	if (opts.isGroup) {
 		lines.push(
