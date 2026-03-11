@@ -111,7 +111,7 @@ function scheduleNext() {
 		timer = null;
 
 		try {
-			console.log(`⏰ Cron firing: [${job.id}] ${job.label || job.message.substring(0, 40)}`);
+			console.log(`⏰ ${chat.contactId}: cron fired [${job.id}] ${job.label || job.message.substring(0, 40)}`);
 
 			if (fireCallback) {
 				await fireCallback(chat.contactId, job.message);
@@ -122,7 +122,7 @@ function scheduleNext() {
 				saveJobsFile(chat.jobsPath, chat.jobs);
 			}
 		} catch (err) {
-			console.error(`Cron error [${job.id}]:`, err);
+			console.error(`⏰ ${chat.contactId}: cron error [${job.id}]`, err);
 		}
 
 		scheduleNext();
@@ -162,7 +162,7 @@ export function startCron(callback: FireCallback) {
 	}
 
 	const totalJobs = allChats.reduce((sum, c) => sum + c.jobs.length, 0);
-	console.log(`⏰ Cron started with ${totalJobs} job(s) across ${allChats.length} chat(s)`);
+	console.log(`⏰ Cron: ${totalJobs} job(s) across ${allChats.length} chat(s)`);
 	scheduleNext();
 }
 

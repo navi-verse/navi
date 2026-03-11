@@ -21,12 +21,12 @@ async function main() {
 		// Strip reaction tags — not applicable for system-initiated messages
 		const cleaned = response.replace(/\[react:.+?\]/g, "").trim();
 		if (!cleaned || cleaned === "[skip]" || cleaned === "(no response)") {
-			console.log(`⏭️ ${contactId}: delivery skipped (${cleaned || "empty"})`);
+			console.log(`⏭️ ${contactId}: skipped (${cleaned || "empty"})`);
 			return;
 		}
 		const sock = getSocket();
 		if (!sock) {
-			console.log(`⚠️ ${contactId}: no socket, cannot deliver`);
+			console.log(`⚠️ ${contactId}: no socket`);
 			return;
 		}
 		const chunks = splitMessage(cleaned, 4000);
@@ -38,13 +38,13 @@ async function main() {
 
 	startCron(async (contactId, message) => {
 		const response = await chat(contactId, cronPrompt(message));
-		console.log(`⏰ ${contactId} cron response: ${response.substring(0, 100)}`);
+		console.log(`⏰ ${contactId}: cron → ${response.substring(0, 100)}`);
 		await deliver(contactId, response);
 	});
 
 	startHeartbeat(async (contactId, prompt) => {
 		const response = await chat(contactId, prompt);
-		console.log(`💓 ${contactId} heartbeat response: ${response.substring(0, 100)}`);
+		console.log(`💓 ${contactId}: heartbeat → ${response.substring(0, 100)}`);
 		await deliver(contactId, response);
 	});
 }

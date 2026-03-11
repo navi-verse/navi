@@ -50,7 +50,7 @@ export function startHeartbeat(callback: HeartbeatCallback) {
 				try {
 					await callback(contactId, prompt);
 				} catch (err) {
-					console.error(`Heartbeat error for ${entry}:`, err);
+					console.error(`💓 ${contactId}: error`, err);
 				}
 			}
 		} finally {
@@ -58,5 +58,5 @@ export function startHeartbeat(callback: HeartbeatCallback) {
 		}
 	}, intervalMs);
 
-	console.log(`💓 Heartbeat started — every ${config.heartbeatIntervalSeconds ?? 1800}s, scanning all chats`);
+	console.log(`💓 Heartbeat: every ${config.heartbeatIntervalSeconds ?? 1800}s, scanning all chats`);
 }

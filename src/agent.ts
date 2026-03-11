@@ -50,7 +50,7 @@ export function initAgent() {
 		console.log(`📌 Model: ${config.model}`);
 	}
 
-	console.log("🤖 Navi initialized");
+	console.log("🤖 Navi: initialized");
 }
 
 /**
@@ -123,7 +123,7 @@ async function getSession(contactId: string) {
 	});
 
 	sessions.set(contactId, result);
-	console.log(`🆕 Created session for ${contactId}`);
+	console.log(`🆕 ${contactId}: session created`);
 
 	return result;
 }
@@ -171,7 +171,7 @@ export async function abortSession(contactId: string): Promise<boolean> {
 	if (!existing) return false;
 
 	await existing.session.abort();
-	console.log(`⏹️ Aborted session for ${contactId}`);
+	console.log(`⏹️ ${contactId}: session aborted`);
 	return true;
 }
 
@@ -190,5 +190,5 @@ export async function resetSession(contactId: string): Promise<void> {
 		rmSync(paths.session, { recursive: true });
 	}
 
-	console.log(`🗑️ Reset session for ${contactId}`);
+	console.log(`🗑️ ${contactId}: session reset`);
 }

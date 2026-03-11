@@ -110,7 +110,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			const sizeKb = Math.round(buffer.length / 1024);
 			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
 			descriptions.push(`[Image saved: ${filePath} (${sizeKb} KB)]`);
-			console.log(`📸 Saved image: ${filePath}`);
+			console.log(`📸 image: ${filePath}`);
 		} catch (err) {
 			console.error("Failed to download image:", err);
 		}
@@ -126,7 +126,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			const sizeKb = Math.round(buffer.length / 1024);
 			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
 			descriptions.push(`[Sticker saved: ${filePath} (${sizeKb} KB)]`);
-			console.log(`🎨 Saved sticker: ${filePath}`);
+			console.log(`🎨 sticker: ${filePath}`);
 		} catch (err) {
 			console.error("Failed to download sticker:", err);
 		}
@@ -144,7 +144,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			const label = isGif ? "GIF" : "Video";
 			const sizeKb = Math.round(buffer.length / 1024);
 			const desc = `[${label} received: ${filePath} (${sizeKb} KB)]`;
-			console.log(`🎬 Saved ${label.toLowerCase()}: ${filePath}`);
+			console.log(`🎬 ${label.toLowerCase()}: ${filePath}`);
 			return { text: text ? `${desc}\n${text}` : desc, images };
 		} catch (err) {
 			console.error("Failed to download video:", err);
@@ -163,7 +163,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			const label = isVoice ? "Voice note" : "Audio";
 			const sizeKb = Math.round(buffer.length / 1024);
 			const desc = `[${label} received: ${filePath} (${sizeKb} KB)]`;
-			console.log(`🎵 Saved ${label.toLowerCase()}: ${filePath}`);
+			console.log(`🎵 ${label.toLowerCase()}: ${filePath}`);
 			return { text: text ? `${desc}\n${text}` : desc, images };
 		} catch (err) {
 			console.error("Failed to download audio:", err);
@@ -180,7 +180,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
 			const desc = `[Document received: ${filePath} (${sizeKb} KB, ${mime})]`;
-			console.log(`📄 Saved document: ${filePath}`);
+			console.log(`📄 document: ${filePath}`);
 			return { text: text ? `${desc}\n${text}` : desc, images };
 		} catch (err) {
 			console.error("Failed to download document:", err);
@@ -213,9 +213,9 @@ export async function sendOutboxFiles(sock: WASocket, jid: string, outboxDir: st
 			}
 
 			unlinkSync(filePath);
-			console.log(`📤 Sent outbox file: ${file}`);
+			console.log(`📤 outbox: ${file}`);
 		} catch (err) {
-			console.error(`Failed to send outbox file ${file}:`, err);
+			console.error(`📤 outbox error ${file}:`, err);
 		}
 	}
 }
@@ -249,16 +249,16 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			const shouldReconnect = error?.output?.statusCode !== DisconnectReason.loggedOut;
 
 			if (shouldReconnect) {
-				console.log("🔄 Reconnecting...");
+				console.log("🔄 WhatsApp: reconnecting");
 				connectWhatsApp(onMessage);
 			} else {
-				console.error("❌ Logged out. Delete", config.baileysAuthDir, "and restart.");
+				console.error("❌ WhatsApp: logged out, delete", config.baileysAuthDir, "and restart");
 				process.exit(1);
 			}
 		}
 
 		if (connection === "open") {
-			console.log("✅ WhatsApp connected!");
+			console.log("✅ WhatsApp: connected");
 		}
 	});
 
@@ -272,7 +272,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			if (!jid) continue;
 
 			if (config.allowedJids.length > 0 && !config.allowedJids.includes(jid)) {
-				console.log(`⛔ Blocked message from ${jid}`);
+				console.log(`⛔ ${jid}: blocked`);
 				continue;
 			}
 
@@ -280,7 +280,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			try {
 				await sock.readMessages([msg.key]);
 			} catch (err) {
-				console.error(`Failed to mark message as read for ${jid}:`, err);
+				console.error(`👁️ ${jid}: read receipt failed`, err);
 			}
 
 			const chatPaths = getChatPaths(jid);
@@ -342,7 +342,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 				await onMessage(jid, promptText, ctx, images.length ? images : undefined);
 				await sendOutboxFiles(sock, jid, chatPaths.outbox);
 			} catch (err) {
-				console.error(`Error handling message from ${jid}:`, err);
+				console.error(`❌ ${jid}: message handler error`, err);
 				await ctx.respond("⚠️ Something went wrong processing your message. Try again.");
 			}
 		}
