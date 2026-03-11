@@ -37,25 +37,11 @@ Two plain files. No embeddings, no vector DB.
   HISTORY.md    ← timestamped event log, grep-searchable
 ```
 
-**MEMORY.md** — Small, curated. User preferences, project context, relationships, ongoing commitments. Always injected into the system prompt so the agent has it every turn. The agent updates it directly via `write_file`/`edit_file`.
+**MEMORY.md** — Small, curated. User preferences, project context, relationships, ongoing commitments. Always injected into the system prompt so the agent has it every turn. The agent updates it directly via `edit`/`write`.
 
-**HISTORY.md** — Append-only log of timestamped entries. Never loaded into prompt — only accessed on demand when the agent greps for past events. Format:
+**HISTORY.md** — Timestamped summaries of noteworthy interactions. Never loaded into prompt — only accessed on demand when the agent greps for past events. The agent appends entries itself when something worth remembering happens. Format: `[YYYY-MM-DD HH:MM] 2-5 sentence summary`.
 
-```
-[2026-03-10 14:30] User asked about NAS backup setup. Walked through SSH config,
-set up automated rsync job. User prefers daily backups at 3am.
-
-[2026-03-11 09:15] Morning briefing delivered. Weather 12°C cloudy, reminded about
-mom's birthday Saturday. User confirmed ordering the book.
-```
-
-**Consolidation** — When unconsolidated messages exceed a configurable threshold (default 100), a dedicated LLM call:
-1. Reads the old messages + current MEMORY.md
-2. Produces a 2–5 sentence summary → appended to HISTORY.md with timestamp
-3. Updates MEMORY.md with any new persistent facts
-4. Advances the consolidation pointer so old messages drop out of context
-
-The agent's regular tools (`write_file`, `edit_file`, `grep`) work on these files. No special memory API — just files the agent knows about.
+Both files are created with descriptions on boot. The agent's regular tools (`write`, `edit`, `grep`, `read`) work on these files — no special memory API, just files the agent knows about.
 
 ---
 
@@ -133,7 +119,7 @@ src/
   channel.ts      ← ChannelContext interface, handleMessage(), commands
   agent.ts        ← Pi SDK session management, chat()
   whatsapp.ts     ← Baileys transport, media handling
-  memory.ts       ← MemoryStore: load/save/consolidate  [planned]
+  memory.ts       ← two-layer memory: MEMORY.md + HISTORY.md
   cron.ts         ← CronService: scheduler + job tool    [planned]
   heartbeat.ts    ← HeartbeatService: periodic pulse     [planned]
 ```

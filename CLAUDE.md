@@ -26,6 +26,7 @@ src/
   config.ts     — Loads ~/.navi/settings.json with defaults
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Session management, chat(), abortSession(), resetSession()
+  memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md
   whatsapp.ts   — Baileys WhatsApp transport
 ```
 
