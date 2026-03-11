@@ -33,7 +33,7 @@ export function initAgent() {
 	authStorage = AuthStorage.create();
 	modelRegistry = new ModelRegistry(authStorage);
 
-	mkdirSync(config.agentCwd, { recursive: true });
+	mkdirSync(config.workspaceDir, { recursive: true });
 	mkdirSync(config.sessionsDir, { recursive: true });
 	initMemory();
 
@@ -69,7 +69,7 @@ async function getSession(contactId: string) {
 
 	mkdirSync(sessionDir, { recursive: true });
 
-	const settingsManager = SettingsManager.create(config.agentCwd);
+	const settingsManager = SettingsManager.create(config.workspaceDir);
 	const [defaultProvider, defaultModel] = config.model?.split("/") ?? [];
 
 	settingsManager.applyOverrides({
@@ -89,19 +89,19 @@ async function getSession(contactId: string) {
 
 	const systemPrompt = config.systemPrompt + getMemoryPrompt();
 	const resourceLoader = new DefaultResourceLoader({
-		cwd: config.agentCwd,
+		cwd: config.workspaceDir,
 		settingsManager,
 		systemPrompt,
 	});
 	await resourceLoader.reload();
 
 	const result = await createAgentSession({
-		cwd: config.agentCwd,
+		cwd: config.workspaceDir,
 		authStorage,
 		modelRegistry,
 		settingsManager,
 		resourceLoader,
-		sessionManager: SessionManager.continueRecent(config.agentCwd, sessionDir),
+		sessionManager: SessionManager.continueRecent(config.workspaceDir, sessionDir),
 		tools: [...codingTools, grepTool, findTool, lsTool],
 	});
 

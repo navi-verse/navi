@@ -27,7 +27,7 @@ type PackageSource =
 
 interface NaviSettings {
 	allowedJids: string[];
-	agentCwd: string;
+	workspaceDir: string;
 	systemPrompt: string;
 	model?: string;
 	defaultModels: Record<string, string>;
@@ -63,7 +63,7 @@ const defaultModels: Record<string, string> = {
 
 const defaults: NaviSettings = {
 	allowedJids: [],
-	agentCwd: join(dataDir, "workspace"),
+	workspaceDir: join(dataDir, "workspace"),
 	systemPrompt: defaultSystemPrompt,
 	defaultModels,
 	thinkingLevel: "low",
@@ -116,7 +116,7 @@ export const config = {
 	systemPrompt: loadSystemPrompt(),
 	sessionsDir: join(dataDir, "sessions"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
-	mediaDir: join(settings.agentCwd, "media"),
-	outboxDir: join(settings.agentCwd, "outbox"),
-	memoryDir: join(settings.agentCwd, "memory"),
+	mediaDir: join(settings.workspaceDir, "media"),
+	outboxDir: join(settings.workspaceDir, "outbox"),
+	memoryDir: join(settings.workspaceDir, "memory"),
 };
