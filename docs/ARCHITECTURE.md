@@ -121,5 +121,5 @@ src/
   whatsapp.ts     ← Baileys transport, media handling
   memory.ts       ← two-layer memory: MEMORY.md + HISTORY.md
   cron.ts         ← job scheduler: at/every/cron + agent tool
-  heartbeat.ts    ← HeartbeatService: periodic pulse     [planned]
+  heartbeat.ts    ← periodic pulse: HEARTBEAT.md → agent → deliver
 ```

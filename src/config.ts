@@ -40,6 +40,8 @@ interface NaviSettings {
 	packages?: PackageSource[];
 	extensions: string[];
 	skills: string[];
+	heartbeatContactId?: string;
+	heartbeatIntervalSeconds?: number;
 }
 
 const outboxDir = join(dataDir, "workspace/outbox/");

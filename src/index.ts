@@ -3,6 +3,7 @@
 import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
 import { startCron } from "./cron";
+import { startHeartbeat } from "./heartbeat";
 import { connectWhatsApp, getSocket, splitMessage } from "./whatsapp";
 
 async function main() {
@@ -16,6 +17,17 @@ async function main() {
 
 	startCron(async (contactId, message) => {
 		const response = await chat(contactId, message);
+		const sock = getSocket();
+		if (!sock) return;
+		const chunks = splitMessage(response, 4000);
+		for (const chunk of chunks) {
+			await sock.sendMessage(contactId, { text: chunk });
+		}
+	});
+
+	startHeartbeat(async (contactId, prompt) => {
+		const response = await chat(contactId, prompt);
+		if (response === "(no response)" || response.trim().startsWith("[skip]")) return;
 		const sock = getSocket();
 		if (!sock) return;
 		const chunks = splitMessage(response, 4000);

@@ -17,6 +17,7 @@ import {
 import type { ImageAttachment } from "./channel";
 import { config } from "./config";
 import { createCronTool } from "./cron";
+import { getHeartbeatPrompt, initHeartbeat } from "./heartbeat";
 import { getMemoryPrompt, initMemory } from "./memory";
 
 // Stores active sessions keyed by contact ID
@@ -37,6 +38,7 @@ export function initAgent() {
 	mkdirSync(config.workspaceDir, { recursive: true });
 	mkdirSync(config.sessionsDir, { recursive: true });
 	initMemory();
+	initHeartbeat();
 
 	// Resolve model — either explicit or auto-pick from first logged-in provider
 	if (!config.model) {
@@ -88,7 +90,7 @@ async function getSession(contactId: string) {
 		skills: config.skills,
 	});
 
-	const systemPrompt = config.systemPrompt + getMemoryPrompt();
+	const systemPrompt = config.systemPrompt + getMemoryPrompt() + getHeartbeatPrompt();
 	const resourceLoader = new DefaultResourceLoader({
 		cwd: config.workspaceDir,
 		settingsManager,

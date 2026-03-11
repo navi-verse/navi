@@ -28,6 +28,7 @@ src/
   agent.ts      — Session management, chat(), abortSession(), resetSession()
   memory.ts     — Two-layer memory: MEMORY.md + HISTORY.md
   cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
+  heartbeat.ts  — Periodic task pulse: HEARTBEAT.md → agent → deliver
   whatsapp.ts   — Baileys WhatsApp transport
 ```
 
