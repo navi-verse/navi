@@ -276,6 +276,13 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 				continue;
 			}
 
+			// Mark as read immediately — before any processing
+			try {
+				await sock.readMessages([msg.key]);
+			} catch (err) {
+				console.error(`Failed to mark message as read for ${jid}:`, err);
+			}
+
 			const chatPaths = getChatPaths(jid);
 			const { text, images } = await extractMedia(msg, chatPaths.media);
 
@@ -290,8 +297,6 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 
 			const logText = messageText || `[${images.length} image(s)]`;
 			console.log(`📩 ${jid}: ${logText.substring(0, 80)}${logText.length > 80 ? "..." : ""}`);
-
-			await sock.readMessages([msg.key]);
 
 			const ctx: ChannelContext = {
 				async respond(response: string) {
