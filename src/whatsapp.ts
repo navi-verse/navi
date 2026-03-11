@@ -281,7 +281,14 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 
 			if (!text.trim() && images.length === 0) continue;
 
-			const logText = text || `[${images.length} image(s)]`;
+			// In group chats, prepend sender info so the agent knows who's writing
+			let messageText = text;
+			if (jid.endsWith("@g.us") && msg.key.participant) {
+				const name = msg.pushName || msg.key.participant.split("@")[0];
+				messageText = `[${name}]: ${text}`;
+			}
+
+			const logText = messageText || `[${images.length} image(s)]`;
 			console.log(`📩 ${jid}: ${logText.substring(0, 80)}${logText.length > 80 ? "..." : ""}`);
 
 			await sock.readMessages([msg.key]);
@@ -323,7 +330,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			};
 
 			try {
-				const promptText = text || (images.length ? "What is this?" : "");
+				const promptText = messageText || (images.length ? "What is this?" : "");
 				await onMessage(jid, promptText, ctx, images.length ? images : undefined);
 				await sendOutboxFiles(sock, jid, chatPaths.outbox);
 			} catch (err) {
