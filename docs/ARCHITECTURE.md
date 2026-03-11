@@ -32,7 +32,7 @@ Send:
 Two plain files per chat. No embeddings, no vector DB.
 
 ```
-~/.navi/chats/<chat>/memory/
+~/.navi/chats/<chat>/
   MEMORY.md     ← curated facts, always in system prompt
   HISTORY.md    ← timestamped event log, grep-searchable
 ```
@@ -123,10 +123,10 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
         media/                ← received media files
         outbox/               ← files queued for delivery
       session/                ← Pi SDK session files
-      memory/
-        MEMORY.md             ← long-term facts (in prompt)
-        HISTORY.md            ← event log (grep-only)
+      MEMORY.md               ← long-term facts (in prompt)
+      HISTORY.md              ← event log (grep-only)
       HEARTBEAT.md            ← periodic task list
+      SOUL.md                 ← per-chat personality (optional)
     g_120363012345678901/     ← group chat (same structure)
       ...
 ```

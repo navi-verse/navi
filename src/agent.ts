@@ -70,7 +70,7 @@ async function getSession(contactId: string) {
 	mkdirSync(paths.outbox, { recursive: true });
 	mkdirSync(paths.session, { recursive: true });
 
-	initMemory(paths.memory);
+	initMemory(paths.memory, paths.history);
 	initHeartbeat(paths.heartbeat);
 
 	const settingsManager = SettingsManager.create(paths.workspace);
@@ -94,7 +94,8 @@ async function getSession(contactId: string) {
 	const soul = existsSync(paths.soul) ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
 	const basePrompt = soul ? `${soul}\n\n${config.systemPrompt}` : config.systemPrompt;
 	const outboxPrompt = `\n\nTo send files back: write them to the outbox directory at ${paths.outbox}/ and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`;
-	const systemPrompt = basePrompt + outboxPrompt + getMemoryPrompt(paths.memory) + getHeartbeatPrompt(paths.heartbeat);
+	const systemPrompt =
+		basePrompt + outboxPrompt + getMemoryPrompt(paths.memory, paths.history) + getHeartbeatPrompt(paths.heartbeat);
 
 	const resourceLoader = new DefaultResourceLoader({
 		cwd: paths.workspace,
