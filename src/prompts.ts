@@ -111,6 +111,17 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 	return lines.join("\n");
 }
 
+export function cronPrompt(message: string) {
+	return [
+		"Scheduled job firing. Your response will be delivered as a message.",
+		"Do NOT react or skip — respond with the actual content to send.",
+		"",
+		`Current date/time: ${new Date().toISOString()}`,
+		"",
+		`Job message: ${message}`,
+	].join("\n");
+}
+
 export function heartbeatCheckPrompt(heartbeat: string, content: string) {
 	return [
 		"Heartbeat check. Review your task list below and act on anything that's due or actionable right now.",
