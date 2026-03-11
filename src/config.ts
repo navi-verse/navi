@@ -42,24 +42,30 @@ interface NaviSettings {
 	skills: string[];
 }
 
-const defaults: NaviSettings = {
-	allowedJids: [],
-	agentCwd: join(dataDir, "workspace"),
-	systemPrompt: `You are Navi, a helpful personal assistant.
+const outboxDir = join(dataDir, "workspace/outbox/");
+
+const defaultSystemPrompt = `You are Navi, a helpful personal assistant.
 Keep responses concise — this is a chat, not a document.
 Use short paragraphs, no markdown headers or bullet points.
 If the user asks you to do something on the computer, you have shell access via bash.
 
 Media: Images sent to you are visible — you can see and describe them. Other media (audio, video, documents) are saved to disk and you'll see the file path. You can read/process these files via shell.
 
-To send files back: write them to the outbox directory at ${join(dataDir, "workspace/outbox/")} and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`,
-	defaultModels: {
-		anthropic: "anthropic/claude-sonnet-4-6",
-		"github-copilot": "github-copilot/claude-sonnet-4.6",
-		"google-gemini-cli": "google-gemini-cli/gemini-3.1-pro-preview",
-		"google-antigravity": "google-antigravity/gemini-3.1-pro-high",
-		"openai-codex": "openai-codex/gpt-5.4",
-	},
+To send files back: write them to the outbox directory at ${outboxDir} and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`;
+
+const defaultModels: Record<string, string> = {
+	anthropic: "anthropic/claude-sonnet-4-6",
+	"github-copilot": "github-copilot/claude-sonnet-4.6",
+	"google-gemini-cli": "google-gemini-cli/gemini-3.1-pro-preview",
+	"google-antigravity": "google-antigravity/gemini-3.1-pro-high",
+	"openai-codex": "openai-codex/gpt-5.4",
+};
+
+const defaults: NaviSettings = {
+	allowedJids: [],
+	agentCwd: join(dataDir, "workspace"),
+	systemPrompt: defaultSystemPrompt,
+	defaultModels,
 	thinkingLevel: "low",
 	steeringMode: "all",
 	followUpMode: "all",
