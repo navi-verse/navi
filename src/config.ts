@@ -2,11 +2,20 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { defaultSoul } from "./prompts";
 
 export const dataDir = join(homedir(), ".navi");
-const settingsPath = join(dataDir, "settings.json");
+
+const defaultModels: Record<string, string> = {
+	anthropic: "anthropic/claude-sonnet-4-6",
+	"github-copilot": "github-copilot/claude-sonnet-4.6",
+	"google-gemini-cli": "google-gemini-cli/gemini-3.1-pro-preview",
+	"google-antigravity": "google-antigravity/gemini-3.1-pro-high",
+	"openai-codex": "openai-codex/gpt-5.4",
+};
+
+// ── Types ────────────────────────────────────────────
 
 interface RetrySettings {
 	enabled: boolean;
@@ -27,7 +36,6 @@ type PackageSource =
 
 interface NaviSettings {
 	allowedJids: string[];
-	systemPrompt: string;
 	model?: string;
 	defaultModels: Record<string, string>;
 	thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
@@ -42,24 +50,12 @@ interface NaviSettings {
 	heartbeatIntervalSeconds?: number;
 }
 
-const defaultSystemPrompt = `You are Navi, a helpful personal assistant.
-Keep responses concise — this is a chat, not a document.
-Use short paragraphs, no markdown headers or bullet points.
-If the user asks you to do something on the computer, you have shell access via bash.
+// ── Load settings ────────────────────────────────────
 
-Media: Images sent to you are visible — you can see and describe them. Other media (audio, video, documents) are saved to disk and you'll see the file path. You can read/process these files via shell.`;
-
-const defaultModels: Record<string, string> = {
-	anthropic: "anthropic/claude-sonnet-4-6",
-	"github-copilot": "github-copilot/claude-sonnet-4.6",
-	"google-gemini-cli": "google-gemini-cli/gemini-3.1-pro-preview",
-	"google-antigravity": "google-antigravity/gemini-3.1-pro-high",
-	"openai-codex": "openai-codex/gpt-5.4",
-};
+const settingsPath = join(dataDir, "settings.json");
 
 const defaults: NaviSettings = {
 	allowedJids: [],
-	systemPrompt: defaultSystemPrompt,
 	defaultModels,
 	thinkingLevel: "low",
 	steeringMode: "all",
@@ -90,16 +86,18 @@ function loadSettings(): NaviSettings {
 	}
 }
 
-const settings = loadSettings();
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+// ── Load soul ────────────────────────────────────────
+
 const soulPath = join(dataDir, "soul.md");
-const defaultSoulPath = join(repoRoot, "docs", "SOUL.md");
 
 function loadSoul(): string {
 	if (existsSync(soulPath)) return readFileSync(soulPath, "utf-8").trim();
-	if (existsSync(defaultSoulPath)) return readFileSync(defaultSoulPath, "utf-8").trim();
-	return "";
+	return defaultSoul;
 }
+
+// ── Config ───────────────────────────────────────────
+
+const settings = loadSettings();
 
 export const config = {
 	...settings,
@@ -108,7 +106,7 @@ export const config = {
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };
 
-// ── Per-chat directory helpers ───────────────────────
+// ── Per-chat paths ───────────────────────────────────
 
 export interface ChatPaths {
 	root: string;
@@ -122,16 +120,12 @@ export interface ChatPaths {
 	soul: string;
 }
 
-/** Convert a WhatsApp JID to a filesystem-safe directory name */
 function getChatDirName(contactId: string): string {
-	// 491234567890@s.whatsapp.net → s_491234567890
-	// 120363012345678901@g.us     → g_120363012345678901
 	const [local, domain] = contactId.split("@");
 	const prefix = domain === "g.us" ? "g" : "s";
 	return `${prefix}_${local}`;
 }
 
-/** Reverse of getChatDirName */
 export function contactIdFromDirName(dirName: string): string {
 	const prefix = dirName.charAt(0);
 	const local = dirName.slice(2);
@@ -139,7 +133,6 @@ export function contactIdFromDirName(dirName: string): string {
 	return `${local}@${domain}`;
 }
 
-/** Get all per-chat paths for a given contact */
 export function getChatPaths(contactId: string): ChatPaths {
 	const root = join(config.chatsDir, getChatDirName(contactId));
 	const workspace = join(root, "workspace");

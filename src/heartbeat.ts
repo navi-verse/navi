@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { config, contactIdFromDirName } from "./config";
+import { heartbeatCheckPrompt } from "./prompts";
 
 export function initHeartbeat(heartbeat: string) {
 	if (!existsSync(heartbeat)) {
@@ -17,14 +18,6 @@ function hasRealTasks(content: string): boolean {
 		const trimmed = line.trim();
 		return trimmed !== "" && trimmed !== "# Heartbeat" && trimmed !== templateLine;
 	});
-}
-
-export function getHeartbeatPrompt(heartbeat: string): string {
-	return `
-You have a heartbeat task list at ${heartbeat}.
-This file is checked periodically and sent to you for action. You can add tasks to it
-during normal conversation when the user asks you to do something later or on a schedule.
-Keep entries concise with clear actionable descriptions.`;
 }
 
 type HeartbeatCallback = (contactId: string, prompt: string) => Promise<void>;
@@ -52,14 +45,7 @@ export function startHeartbeat(callback: HeartbeatCallback) {
 				if (!hasRealTasks(content)) continue;
 
 				const contactId = contactIdFromDirName(entry);
-				const prompt = `Heartbeat check. Review your task list below and act on anything that's due or actionable right now.
-After completing tasks, update ${heartbeatPath} to reflect their new status.
-If nothing needs action right now, respond with exactly "[skip]" and nothing else.
-
-Current date/time: ${new Date().toISOString()}
-
---- HEARTBEAT.md ---
-${content}`;
+				const prompt = heartbeatCheckPrompt(heartbeatPath, content);
 
 				try {
 					await callback(contactId, prompt);

@@ -16,8 +16,9 @@ import {
 import type { ImageAttachment } from "./channel";
 import { config, getChatPaths } from "./config";
 import { createCronTool } from "./cron";
-import { getHeartbeatPrompt, initHeartbeat } from "./heartbeat";
-import { getMemoryPrompt, initMemory } from "./memory";
+import { initHeartbeat } from "./heartbeat";
+import { initMemory, loadMemory } from "./memory";
+import { buildSystemPrompt } from "./prompts";
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -92,15 +93,20 @@ async function getSession(contactId: string) {
 	});
 
 	const soul = existsSync(paths.soul) ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
-	const basePrompt = soul ? `${soul}\n\n${config.systemPrompt}` : config.systemPrompt;
-	const outboxPrompt = `\n\nTo send files back: write them to the outbox directory at ${paths.outbox}/ and they'll be delivered after your response. Images, videos, audio, and documents are all supported.`;
-	const systemPrompt =
-		basePrompt + outboxPrompt + getMemoryPrompt(paths.memory, paths.history) + getHeartbeatPrompt(paths.heartbeat);
+	const fullPrompt = buildSystemPrompt({
+		soul,
+		cwd: paths.workspace,
+		outbox: paths.outbox,
+		memory: paths.memory,
+		history: paths.history,
+		heartbeat: paths.heartbeat,
+		memoryContent: loadMemory(paths.memory),
+	});
 
 	const resourceLoader = new DefaultResourceLoader({
 		cwd: paths.workspace,
 		settingsManager,
-		systemPrompt,
+		systemPrompt: fullPrompt,
 	});
 	await resourceLoader.reload();
 

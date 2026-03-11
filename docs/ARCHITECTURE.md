@@ -114,7 +114,7 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
 ```
 ~/.navi/
   settings.json              ← user config
-  soul.md                    ← personality override (optional, falls back to docs/SOUL.md)
+  soul.md                    ← personality override (optional, falls back to built-in default)
   whatsapp-auth/             ← Baileys session
   jobs.json                  ← cron jobs (global, jobs tagged with contactId)
   chats/
