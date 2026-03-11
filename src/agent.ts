@@ -143,13 +143,13 @@ export async function chat(contactId: string, userMessage: string, images?: Imag
 		} else if (event.type === "tool_execution_start") {
 			toolTimers.set(event.toolCallId, Date.now());
 			const args = JSON.stringify(event.args).substring(0, 200);
-			console.log(`🔧 ${contactId} → ${event.toolName} ${args}`);
+			console.log(`🔧 ${contactId}: ${event.toolName} → ${args}`);
 		} else if (event.type === "tool_execution_end") {
 			const started = toolTimers.get(event.toolCallId);
 			const duration = started ? `${((Date.now() - started) / 1000).toFixed(1)}s` : "";
 			toolTimers.delete(event.toolCallId);
 			const status = event.isError ? "❌" : "✅";
-			console.log(`${status} ${contactId} ← ${event.toolName} ${duration}`);
+			console.log(`${status} ${contactId}: ${event.toolName} ← ${duration}`);
 		}
 	});
 
