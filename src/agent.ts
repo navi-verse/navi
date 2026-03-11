@@ -20,6 +20,7 @@ import { createCronTool } from "./cron";
 import { initHeartbeat } from "./heartbeat";
 import { initMemory, loadMemory } from "./memory";
 import { buildSystemPrompt } from "./prompts";
+import { webFetchTool, webSearchTool } from "./web";
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -120,7 +121,7 @@ async function getSession(contactId: string) {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(paths.workspace, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
-		customTools: [createCronTool(contactId, paths.jobs)],
+		customTools: [createCronTool(contactId, paths.jobs), webSearchTool, webFetchTool],
 	});
 
 	sessions.set(contactId, result);
