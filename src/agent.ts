@@ -16,7 +16,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import type { ImageAttachment } from "./channel";
 import { config } from "./config";
-import { appendHistory, getMemoryPrompt, initMemory } from "./memory";
+import { getMemoryPrompt, initMemory } from "./memory";
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -132,9 +132,7 @@ export async function chat(contactId: string, userMessage: string, images?: Imag
 		unsubscribe();
 	}
 
-	const trimmed = response.trim() || "(no response)";
-	appendHistory(userMessage, trimmed);
-	return trimmed;
+	return response.trim() || "(no response)";
 }
 
 /**
