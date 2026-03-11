@@ -102,7 +102,11 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 			const filePath = join(config.mediaDir, `image_${timestamp()}${extForMime(mime)}`);
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
-			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
+			images.push({
+				type: "image",
+				data: buffer.toString("base64"),
+				mimeType: mime,
+			});
 			descriptions.push(`[Image saved: ${filePath} (${sizeKb} KB)]`);
 			console.log(`📸 Saved image: ${filePath}`);
 		} catch (err) {
@@ -118,7 +122,11 @@ async function extractMedia(msg: WAMessage): Promise<ExtractedMedia> {
 			const filePath = join(config.mediaDir, `sticker_${timestamp()}${extForMime(mime)}`);
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
-			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
+			images.push({
+				type: "image",
+				data: buffer.toString("base64"),
+				mimeType: mime,
+			});
 			descriptions.push(`[Sticker saved: ${filePath} (${sizeKb} KB)]`);
 			console.log(`🎨 Saved sticker: ${filePath}`);
 		} catch (err) {
@@ -203,7 +211,11 @@ async function sendOutboxFiles(sock: WASocket, jid: string): Promise<void> {
 			} else if ([".ogg", ".mp3", ".m4a", ".wav"].includes(ext)) {
 				await sock.sendMessage(jid, { audio: buffer, mimetype: mime });
 			} else {
-				await sock.sendMessage(jid, { document: buffer, mimetype: mime, fileName: file });
+				await sock.sendMessage(jid, {
+					document: buffer,
+					mimetype: mime,
+					fileName: file,
+				});
 			}
 
 			unlinkSync(filePath);
@@ -238,7 +250,9 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 		}
 
 		if (connection === "close") {
-			const error = lastDisconnect?.error as { output?: { statusCode?: number } };
+			const error = lastDisconnect?.error as {
+				output?: { statusCode?: number };
+			};
 			const shouldReconnect = error?.output?.statusCode !== DisconnectReason.loggedOut;
 
 			if (shouldReconnect) {
@@ -291,9 +305,15 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 					const mime = options?.mimeType || mimeForExt(filePath);
 
 					if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
-						await sock.sendMessage(jid, { image: buffer, caption: options?.caption });
+						await sock.sendMessage(jid, {
+							image: buffer,
+							caption: options?.caption,
+						});
 					} else if ([".mp4", ".mkv", ".avi"].includes(ext)) {
-						await sock.sendMessage(jid, { video: buffer, caption: options?.caption });
+						await sock.sendMessage(jid, {
+							video: buffer,
+							caption: options?.caption,
+						});
 					} else if ([".ogg", ".mp3", ".m4a", ".wav"].includes(ext)) {
 						await sock.sendMessage(jid, { audio: buffer, mimetype: mime });
 					} else {
