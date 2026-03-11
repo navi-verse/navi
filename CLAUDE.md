@@ -64,4 +64,5 @@ npm run login   — Log in to an AI provider
 - **No `.js` in imports** — using `moduleResolution: "bundler"` with tsx
 - **No unnecessary docs/comments** — code should be self-explanatory
 - **Ask before over-engineering** — don't add features, refactors, or abstractions beyond what's requested
+- **Big changes: plan → implement → review → commit** — use `/plan` for non-trivial work, implement, self-review for bugs/edge cases, then ask to commit
 - **Always ask to commit** — after completing a meaningful change, ask if the user wants to commit
