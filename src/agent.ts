@@ -68,7 +68,7 @@ async function getSession(contactId: string) {
 
 	const paths = getChatPaths(contactId);
 
-	// Ensure all per-chat dirs exist
+	// Ensure all per-contact dirs exist
 	mkdirSync(paths.playground, { recursive: true });
 	mkdirSync(paths.media, { recursive: true });
 	mkdirSync(paths.outbox, { recursive: true });

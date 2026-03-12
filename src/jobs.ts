@@ -1,4 +1,4 @@
-// jobs.ts — Job scheduler: at/every/cron with per-chat JSON persistence and agent tool
+// jobs.ts — Job scheduler: at/every/cron with per-contact JSON persistence and agent tool
 
 import { randomBytes } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";

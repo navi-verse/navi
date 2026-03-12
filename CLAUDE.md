@@ -23,13 +23,13 @@ To add a new channel: create a transport that produces a `ChannelContext`, wire 
 ```
 src/
   index.ts      — Entry point, bootstraps agent + transports
-  config.ts     — Settings, per-chat path helpers (getChatPaths, getChatDirName)
+  config.ts     — Settings, per-contact path helpers, migration
   prompts.ts    — System prompt composition and event prompts
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
   brain.ts      — Shared brain initialization (GLOBAL.md) and history seeding
   jobs.ts       — Job scheduler: at/every/cron with persistence + agent tool
-  routines.ts   — Periodic check-in: scans all chats for ROUTINES.md
+  routines.ts   — Periodic check-in: scans all contacts for ROUTINES.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
   web.ts        — Web search (Brave) and web fetch tools
   stt.ts        — Voice message transcription via OpenAI

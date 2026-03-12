@@ -58,5 +58,5 @@ export function startRoutines(callback: RoutineCallback) {
 		}
 	}, intervalMs);
 
-	log(`🔄 Routines: every ${config.routineIntervalSeconds ?? 1800}s, scanning all chats`);
+	log(`🔄 Routines: every ${config.routineIntervalSeconds ?? 1800}s, scanning all contacts`);
 }

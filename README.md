@@ -76,7 +76,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.
   SOUL.md               # Personality (editable)
   AGENTS.md             # Agent instructions (editable)
   brain/                # Shared knowledge (GLOBAL.md + agent-created files)
-  chats/                # Per-contact sessions, history, routines, jobs
+  workspace/            # Per-contact sessions, history, routines, jobs
   whatsapp-auth/        # WhatsApp session credentials (keep private!)
 ```
 

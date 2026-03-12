@@ -58,7 +58,7 @@ Per-chat files that remain:
 A periodic pulse that lets Navi act without being asked. Each chat has its own routine list.
 
 ```
-~/.navi/chats/<chat>/ROUTINES.md
+~/.navi/workspace/<contact>/ROUTINES.md
 ```
 
 **ROUTINES.md** — A markdown file listing active tasks and watchers. The agent reads and edits this file as tasks come and go.
@@ -71,7 +71,7 @@ Example content:
 ```
 
 **Execution cycle** (configurable interval, default 30 minutes):
-1. **Scan** — Iterate all chat dirs under `~/.navi/chats/`, read each ROUTINES.md.
+1. **Scan** — Iterate all contact dirs under `~/.navi/workspace/`, read each ROUTINES.md.
 2. **Decide** — For each non-empty routine list, send it to the LLM. It decides: skip (nothing to do) or act.
 3. **Execute** — If acting, the task goes through the full agent loop (shell access, tools, everything).
 4. **Notify** — If execution produces output worth sharing, deliver it to the chat.
@@ -87,7 +87,7 @@ Agent-managed job scheduler. Three schedule types:
 - **`cron`** — Standard cron expressions with optional timezone (e.g. `0 9 * * 1-5 Europe/Zurich`).
 
 ```
-~/.navi/chats/<chat>/jobs.json
+~/.navi/workspace/<contact>/jobs.json
 ```
 
 Jobs are persisted as JSON per chat. The agent creates, lists, and removes jobs via a `job` tool. When a job fires, its message is injected into the agent loop and the response is delivered to the chat.
@@ -103,7 +103,7 @@ Two editable files define Navi's behavior:
 - **`~/.navi/SOUL.md`** — Personality and identity. Who Navi is.
 - **`~/.navi/AGENTS.md`** — Operational instructions. How Navi works.
 
-Both are seeded from `defaults/` in the repo on first start. Users can edit them freely. AGENTS.md uses `{{placeholder}}` syntax for dynamic values (contactId, workspace, brainDir, etc.) that get replaced at prompt build time.
+Both are seeded from `defaults/` in the repo on first start. Users can edit them freely. AGENTS.md uses `{{placeholder}}` syntax for dynamic values (contactId, playground, brainDir, etc.) that get replaced at prompt build time.
 
 The system prompt is composed as: SOUL.md + AGENTS.md (with placeholders replaced) + GLOBAL.md content.
 
@@ -134,16 +134,16 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
     GLOBAL.md                ← universal facts (always in prompt)
     ...                      ← agent-created files (on demand)
   whatsapp-auth/             ← Baileys session
-  chats/
+  workspace/
     s_491234567890/           ← individual DM (JID → dir name)
-      workspace/              ← agent cwd
+      playground/             ← agent cwd
         media/                ← received media files
         outbox/               ← files queued for delivery
       session/                ← Pi SDK session files
       HISTORY.md              ← event log (grep-only)
       ROUTINES.md             ← periodic task list
       jobs.json               ← scheduled jobs for this chat
-      SOUL.md                 ← per-chat personality (optional)
+      SOUL.md                 ← per-contact personality (optional)
     g_120363012345678901/     ← group chat (same structure)
       ...
 ```
@@ -153,14 +153,14 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
 ```
 src/
   index.ts        ← entry point, bootstraps everything
-  config.ts       ← settings, per-chat path helpers (getChatPaths, getChatDirName)
+  config.ts       ← settings, per-contact path helpers, migration
   prompts.ts      ← system prompt composition and event prompts
   channel.ts      ← ChannelContext interface, handleMessage(), commands
-  agent.ts        ← per-chat session management, chat()
+  agent.ts        ← per-contact session management, chat()
   brain.ts        ← shared brain initialization (GLOBAL.md) and history seeding
   jobs.ts         ← job scheduler: at/every/cron + agent tool
-  routines.ts     ← periodic check-in: scans all chats for ROUTINES.md
-  whatsapp.ts     ← Baileys transport, per-chat media + outbox
+  routines.ts     ← periodic check-in: scans all contacts for ROUTINES.md
+  whatsapp.ts     ← Baileys transport, per-contact media + outbox
   web.ts          ← web search (Brave) and web fetch tools
   stt.ts          ← voice message transcription via OpenAI
   login.ts        ← interactive provider login
