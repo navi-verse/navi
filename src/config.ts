@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { defaultSoul } from "./prompts";
 
 export const dataDir = join(homedir(), ".navi");
+export const brainDir = join(dataDir, "brain");
 
 const defaultModels: Record<string, string> = {
 	anthropic: "anthropic/claude-sonnet-4-6",
@@ -127,7 +128,6 @@ export interface ChatPaths {
 	media: string;
 	outbox: string;
 	session: string;
-	memory: string;
 	history: string;
 	heartbeat: string;
 	jobs: string;
@@ -156,7 +156,6 @@ export function getChatPaths(contactId: string): ChatPaths {
 		media: join(workspace, "media"),
 		outbox: join(workspace, "outbox"),
 		session: join(root, "session"),
-		memory: join(root, "MEMORY.md"),
 		history: join(root, "HISTORY.md"),
 		heartbeat: join(root, "HEARTBEAT.md"),
 		jobs: join(root, "jobs.json"),

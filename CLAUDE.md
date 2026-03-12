@@ -27,7 +27,7 @@ src/
   prompts.ts    — All prompt text: soul, system prompt, heartbeat check
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
-  memory.ts     — Memory file seeding (MEMORY.md + HISTORY.md) and loading
+  brain.ts      — Shared brain initialization (GLOBAL.md) and history seeding
   cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
   heartbeat.ts  — Periodic task pulse: scans all chats for HEARTBEAT.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
@@ -39,6 +39,7 @@ src/
 - **Sessions persist** across restarts via `SessionManager.continueRecent()`
 - **WhatsApp delivers offline messages** on reconnect — no backfill needed
 - **Config** lives at `~/.navi/settings.json`, data at `~/.navi/`
+- **Shared brain** at `~/.navi/brain/` — GLOBAL.md always loaded, other files read on demand via shell. Agent self-organizes by person/topic.
 - **Baileys** must be installed from GitHub (`github:WhiskeySockets/Baileys`), not npm (stale)
 
 ## Commands
