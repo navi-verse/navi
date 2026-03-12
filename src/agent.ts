@@ -37,7 +37,7 @@ export function initAgent() {
 	authStorage = AuthStorage.create(join(dataDir, "auth.json"));
 	modelRegistry = new ModelRegistry(authStorage);
 
-	mkdirSync(config.chatsDir, { recursive: true });
+	mkdirSync(config.workspaceDir, { recursive: true });
 	initBrain();
 
 	// Resolve model — either explicit or auto-pick from first logged-in provider
@@ -58,7 +58,7 @@ export function initAgent() {
 
 /**
  * Get or create a Navi session for a contact.
- * Each contact gets their own isolated session with its own workspace and routines.
+ * Each contact gets their own isolated session with its own playground and routines.
  */
 async function getSession(contactId: string) {
 	const existing = sessions.get(contactId);
@@ -69,7 +69,7 @@ async function getSession(contactId: string) {
 	const paths = getChatPaths(contactId);
 
 	// Ensure all per-chat dirs exist
-	mkdirSync(paths.workspace, { recursive: true });
+	mkdirSync(paths.playground, { recursive: true });
 	mkdirSync(paths.media, { recursive: true });
 	mkdirSync(paths.outbox, { recursive: true });
 	mkdirSync(paths.session, { recursive: true });
@@ -77,7 +77,7 @@ async function getSession(contactId: string) {
 	initHistory(paths.history);
 	initRoutines(paths.routines);
 
-	const settingsManager = SettingsManager.create(paths.workspace);
+	const settingsManager = SettingsManager.create(paths.playground);
 	const [defaultProvider, defaultModel] = config.model?.split("/") ?? [];
 
 	settingsManager.applyOverrides({
@@ -105,7 +105,7 @@ async function getSession(contactId: string) {
 		agents: config.agents,
 		agentsSource: config.agentsSource,
 		contactId,
-		workspace: paths.workspace,
+		playground: paths.playground,
 		outbox: paths.outbox,
 		brainDir,
 		history: paths.history,
@@ -115,19 +115,19 @@ async function getSession(contactId: string) {
 	});
 
 	const resourceLoader = new DefaultResourceLoader({
-		cwd: paths.workspace,
+		cwd: paths.playground,
 		settingsManager,
 		systemPrompt: fullPrompt,
 	});
 	await resourceLoader.reload();
 
 	const result = await createAgentSession({
-		cwd: paths.workspace,
+		cwd: paths.playground,
 		authStorage,
 		modelRegistry,
 		settingsManager,
 		resourceLoader,
-		sessionManager: SessionManager.continueRecent(paths.workspace, paths.session),
+		sessionManager: SessionManager.continueRecent(paths.playground, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
 		customTools: [createJobTool(contactId, paths.jobs), webSearchTool, webFetchTool],
 	});

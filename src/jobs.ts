@@ -143,9 +143,9 @@ function getChatEntry(contactId: string, jobsPath: string): ChatJobs {
 export function startJobs(callback: FireCallback) {
 	fireCallback = callback;
 
-	if (existsSync(config.chatsDir)) {
-		for (const entry of readdirSync(config.chatsDir)) {
-			const entryPath = join(config.chatsDir, entry);
+	if (existsSync(config.workspaceDir)) {
+		for (const entry of readdirSync(config.workspaceDir)) {
+			const entryPath = join(config.workspaceDir, entry);
 			if (!statSync(entryPath).isDirectory()) continue;
 
 			const jobsPath = join(entryPath, "jobs.json");

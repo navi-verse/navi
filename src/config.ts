@@ -118,7 +118,7 @@ export const config = {
 	soulSource: soul.source,
 	agents: agents.content,
 	agentsSource: agents.source,
-	chatsDir: join(dataDir, "chats"),
+	workspaceDir: join(dataDir, "workspace"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };
 
@@ -139,7 +139,7 @@ export const logError = (...args: unknown[]) => console.error(`[${ts()}]`, ...ar
 
 export interface ChatPaths {
 	root: string;
-	workspace: string;
+	playground: string;
 	media: string;
 	outbox: string;
 	session: string;
@@ -163,13 +163,13 @@ export function contactIdFromDirName(dirName: string): string {
 }
 
 export function getChatPaths(contactId: string): ChatPaths {
-	const root = join(config.chatsDir, getChatDirName(contactId));
-	const workspace = join(root, "workspace");
+	const root = join(config.workspaceDir, getChatDirName(contactId));
+	const playground = join(root, "playground");
 	return {
 		root,
-		workspace,
-		media: join(workspace, "media"),
-		outbox: join(workspace, "outbox"),
+		playground,
+		media: join(playground, "media"),
+		outbox: join(playground, "outbox"),
 		session: join(root, "session"),
 		history: join(root, "HISTORY.md"),
 		routines: join(root, "ROUTINES.md"),

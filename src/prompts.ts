@@ -6,7 +6,7 @@ interface BuildSystemPromptOptions {
 	agents: string;
 	agentsSource: string;
 	contactId: string;
-	workspace: string;
+	playground: string;
 	outbox: string;
 	brainDir: string;
 	history: string;
@@ -18,7 +18,7 @@ interface BuildSystemPromptOptions {
 export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 	const agents = opts.agents
 		.replace(/\{\{contactId\}\}/g, opts.contactId)
-		.replace(/\{\{workspace\}\}/g, opts.workspace)
+		.replace(/\{\{playground\}\}/g, opts.playground)
 		.replace(/\{\{outbox\}\}/g, opts.outbox)
 		.replace(/\{\{brainDir\}\}/g, opts.brainDir)
 		.replace(/\{\{history\}\}/g, opts.history)

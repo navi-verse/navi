@@ -31,11 +31,11 @@ export function startRoutines(callback: RoutineCallback) {
 		running = true;
 
 		try {
-			if (!existsSync(config.chatsDir)) return;
+			if (!existsSync(config.workspaceDir)) return;
 
-			const entries = readdirSync(config.chatsDir);
+			const entries = readdirSync(config.workspaceDir);
 			for (const entry of entries) {
-				const entryPath = join(config.chatsDir, entry);
+				const entryPath = join(config.workspaceDir, entry);
 				if (!statSync(entryPath).isDirectory()) continue;
 
 				const routinesPath = join(entryPath, "ROUTINES.md");
