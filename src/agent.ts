@@ -170,7 +170,10 @@ export async function chat(
 	});
 
 	try {
-		await session.prompt(userMessage, images?.length ? { images } : undefined);
+		await session.prompt(userMessage, {
+			streamingBehavior: config.streamingBehavior,
+			...(images?.length ? { images } : {}),
+		});
 	} finally {
 		unsubscribe();
 	}

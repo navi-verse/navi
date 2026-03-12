@@ -47,6 +47,7 @@ interface NaviSettings {
 	packages?: PackageSource[];
 	extensions: string[];
 	skills: string[];
+	streamingBehavior: "steer" | "followUp";
 	routineIntervalSeconds?: number;
 }
 
@@ -60,6 +61,7 @@ const defaults: NaviSettings = {
 	thinkingLevel: "low",
 	steeringMode: "all",
 	followUpMode: "all",
+	streamingBehavior: "steer" as const,
 	retry: { enabled: true, maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 30000 },
 	extensions: [join(dataDir, "extensions")],
 	skills: [join(dataDir, "skills")],
