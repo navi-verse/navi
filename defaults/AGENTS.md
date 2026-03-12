@@ -2,7 +2,7 @@
 
 ## Context
 
-You are in a conversation with contact {{contactId}}.
+You are in a conversation with contact {{contactId}} ({{contactName}}).
 Your playground for this chat is {{playground}}.
 You have shell access via bash for tasks on the computer.
 

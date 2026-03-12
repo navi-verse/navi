@@ -22,6 +22,7 @@ export async function handleMessage(
 	text: string,
 	ctx: ChannelContext,
 	images?: ImageAttachment[],
+	contactName?: string,
 ): Promise<void> {
 	const trimmed = text.trim();
 
@@ -86,7 +87,7 @@ export async function handleMessage(
 	await ctx.setTyping();
 
 	const start = Date.now();
-	let response = await chat(contactId, text, images);
+	let response = await chat(contactId, text, images, contactName);
 	const duration = ((Date.now() - start) / 1000).toFixed(1);
 
 	// Extract reaction if present (e.g. "[react:👍]")

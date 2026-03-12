@@ -60,7 +60,7 @@ export function initAgent() {
  * Get or create a Navi session for a contact.
  * Each contact gets their own isolated session with its own playground and routines.
  */
-async function getSession(contactId: string) {
+async function getSession(contactId: string, contactName = "") {
 	const existing = sessions.get(contactId);
 	if (existing) {
 		return existing;
@@ -104,6 +104,7 @@ async function getSession(contactId: string) {
 		agents: config.agents,
 		agentsSource: config.agentsSource,
 		contactId,
+		contactName,
 		playground: paths.playground,
 		outbox: paths.outbox,
 		brainDir,
@@ -141,8 +142,13 @@ async function getSession(contactId: string) {
  * Send a message to the Navi agent and collect the full response.
  * Returns the complete text response.
  */
-export async function chat(contactId: string, userMessage: string, images?: ImageAttachment[]): Promise<string> {
-	const { session } = await getSession(contactId);
+export async function chat(
+	contactId: string,
+	userMessage: string,
+	images?: ImageAttachment[],
+	contactName?: string,
+): Promise<string> {
+	const { session } = await getSession(contactId, contactName);
 
 	// Collect the streamed response
 	let response = "";

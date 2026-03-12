@@ -22,6 +22,7 @@ export type MessageHandler = (
 	text: string,
 	ctx: ChannelContext,
 	images?: ImageAttachment[],
+	contactName?: string,
 ) => Promise<void>;
 
 const logger = pino({ level: "error" });
@@ -348,7 +349,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 
 			try {
 				const promptText = messageText || (images.length ? "What is this?" : "");
-				await onMessage(jid, promptText, ctx, images.length ? images : undefined);
+				await onMessage(jid, promptText, ctx, images.length ? images : undefined, msg.pushName || undefined);
 				await sendOutboxFiles(sock, jid, chatPaths.outbox);
 			} catch (err) {
 				logError(`❌ ${jid}: message handler error`, err);
