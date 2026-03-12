@@ -33,7 +33,7 @@ interface BuildSystemPromptOptions {
 	outbox: string;
 	brainDir: string;
 	history: string;
-	heartbeat: string;
+	routines: string;
 	globalContent: string;
 	legacyMemoryPath: string | null;
 	isGroup?: boolean;
@@ -66,15 +66,15 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		"",
 		"Privacy: DM conversations are private — never reveal what someone said in a DM. But facts about a person belong in the brain and can be used anywhere.",
 		"",
-		`You have a heartbeat task list at ${opts.heartbeat}.`,
+		`You have a routine task list at ${opts.routines}.`,
 		"This file is checked periodically and sent to you for action.",
 		"Add tasks here for things to follow up on later or check on a schedule.",
 		"Keep entries concise with clear actionable descriptions.",
 		"",
-		"Heartbeat vs Cron — when to use each:",
-		"- Heartbeat: batch multiple checks together, needs conversation context, timing can drift, reduces API calls.",
-		"- Cron: exact timing matters, task needs isolation, one-shot reminders, output delivers directly.",
-		"- Tip: batch similar periodic checks into HEARTBEAT.md instead of creating multiple cron jobs.",
+		"Routines vs Reminders — when to use each:",
+		"- Routines: batch multiple checks together, needs conversation context, timing can drift, reduces API calls.",
+		"- Reminders: exact timing matters, task needs isolation, one-shot reminders, output delivers directly.",
+		"- Tip: batch similar periodic checks into ROUTINES.md instead of creating multiple reminders.",
 		"",
 		"Text formatting (WhatsApp):",
 		"- *bold* _italic_ ~strikethrough~ `inline code` ```monospace block```",
@@ -125,23 +125,23 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 	return lines.join("\n");
 }
 
-export function cronPrompt(message: string) {
+export function reminderPrompt(message: string) {
 	return [
-		"Scheduled job firing. Your response will be delivered as a message.",
+		"Scheduled reminder firing. Your response will be delivered as a message.",
 		"Do NOT react or skip — respond with the actual content to send.",
 		"",
 		`Current date/time: ${new Date().toISOString()}`,
 		"",
-		`Job message: ${message}`,
+		`Reminder: ${message}`,
 	].join("\n");
 }
 
-export function heartbeatCheckPrompt(heartbeat: string, content: string) {
+export function routineCheckPrompt(routines: string, content: string) {
 	return [
-		"Heartbeat check. Review your task list below and act on anything that's due or actionable right now.",
-		`After completing tasks, update ${heartbeat} to reflect their new status.`,
+		"Routine check. Review your task list below and act on anything that's due or actionable right now.",
+		`After completing tasks, update ${routines} to reflect their new status.`,
 		"",
-		"Be proactive — don't just skip every time. Use heartbeats for background work:",
+		"Be proactive — don't just skip every time. Use routines for background work:",
 		"- Act on any tasks that are due or actionable.",
 		"- Periodically review and tidy brain files — distill recent history into long-term knowledge, remove outdated info.",
 		"- Do useful background work: check on projects, organize files, etc.",
@@ -158,7 +158,7 @@ export function heartbeatCheckPrompt(heartbeat: string, content: string) {
 		"",
 		`Current date/time: ${new Date().toISOString()}`,
 		"",
-		"--- HEARTBEAT.md ---",
+		"--- ROUTINES.md ---",
 		content,
 	].join("\n");
 }

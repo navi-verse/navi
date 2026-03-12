@@ -17,9 +17,9 @@ import {
 import { initBrain, initHistory, loadGlobal } from "./brain";
 import type { ImageAttachment } from "./channel";
 import { brainDir, config, dataDir, getChatPaths, log } from "./config";
-import { createCronTool } from "./cron";
-import { initHeartbeat } from "./heartbeat";
 import { buildSystemPrompt } from "./prompts";
+import { createReminderTool } from "./reminders";
+import { initRoutines } from "./routines";
 import { webFetchTool, webSearchTool } from "./web";
 
 // Stores active sessions keyed by contact ID
@@ -58,7 +58,7 @@ export function initAgent() {
 
 /**
  * Get or create a Navi session for a contact.
- * Each contact gets their own isolated session with its own workspace and heartbeat.
+ * Each contact gets their own isolated session with its own workspace and routines.
  */
 async function getSession(contactId: string) {
 	const existing = sessions.get(contactId);
@@ -75,7 +75,7 @@ async function getSession(contactId: string) {
 	mkdirSync(paths.session, { recursive: true });
 
 	initHistory(paths.history);
-	initHeartbeat(paths.heartbeat);
+	initRoutines(paths.routines);
 
 	const settingsManager = SettingsManager.create(paths.workspace);
 	const [defaultProvider, defaultModel] = config.model?.split("/") ?? [];
@@ -103,7 +103,7 @@ async function getSession(contactId: string) {
 		outbox: paths.outbox,
 		brainDir,
 		history: paths.history,
-		heartbeat: paths.heartbeat,
+		routines: paths.routines,
 		globalContent: loadGlobal(),
 		legacyMemoryPath: existsSync(legacyMemoryPath) ? legacyMemoryPath : null,
 		isGroup: contactId.endsWith("@g.us"),
@@ -124,7 +124,7 @@ async function getSession(contactId: string) {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(paths.workspace, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
-		customTools: [createCronTool(contactId, paths.jobs), webSearchTool, webFetchTool],
+		customTools: [createReminderTool(contactId, paths.reminders), webSearchTool, webFetchTool],
 	});
 
 	sessions.set(contactId, result);

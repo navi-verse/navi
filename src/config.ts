@@ -48,7 +48,7 @@ interface NaviSettings {
 	packages?: PackageSource[];
 	extensions: string[];
 	skills: string[];
-	heartbeatIntervalSeconds?: number;
+	routineIntervalSeconds?: number;
 }
 
 // ── Load settings ────────────────────────────────────
@@ -129,8 +129,8 @@ export interface ChatPaths {
 	outbox: string;
 	session: string;
 	history: string;
-	heartbeat: string;
-	jobs: string;
+	routines: string;
+	reminders: string;
 	soul: string;
 }
 
@@ -157,8 +157,8 @@ export function getChatPaths(contactId: string): ChatPaths {
 		outbox: join(workspace, "outbox"),
 		session: join(root, "session"),
 		history: join(root, "HISTORY.md"),
-		heartbeat: join(root, "HEARTBEAT.md"),
-		jobs: join(root, "jobs.json"),
+		routines: join(root, "ROUTINES.md"),
+		reminders: join(root, "reminders.json"),
 		soul: join(root, "SOUL.md"),
 	};
 }

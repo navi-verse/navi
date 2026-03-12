@@ -24,12 +24,12 @@ To add a new channel: create a transport that produces a `ChannelContext`, wire 
 src/
   index.ts      — Entry point, bootstraps agent + transports
   config.ts     — Settings, per-chat path helpers (getChatPaths, getChatDirName)
-  prompts.ts    — All prompt text: soul, system prompt, heartbeat check
+  prompts.ts    — All prompt text: soul, system prompt, routine check
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
   brain.ts      — Shared brain initialization (GLOBAL.md) and history seeding
-  cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
-  heartbeat.ts  — Periodic task pulse: scans all chats for HEARTBEAT.md
+  reminders.ts  — Reminder scheduler: at/every/cron with persistence + agent tool
+  routines.ts   — Periodic check-in: scans all chats for ROUTINES.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
 ```
 
