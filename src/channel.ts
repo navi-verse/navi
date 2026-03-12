@@ -97,7 +97,7 @@ export async function handleMessage(
 		await ctx.react(reactMatch[1]);
 	}
 
-	if (!response || response === "[skip]") {
+	if (!response || response === "[skip]" || response === "(no response)") {
 		log(`⏭️ ${contactId} (${duration}s): ${reactMatch ? reactMatch[1] : "skipped"}`);
 		await ctx.stopTyping();
 		return;
