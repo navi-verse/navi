@@ -1,7 +1,7 @@
 # Navi
 
 Personal messaging assistant powered by Pi's coding agent SDK (`@mariozechner/pi-coding-agent`).
-Messages from WhatsApp (and future channels) route to per-contact agent sessions with shell access, persistent memory, and Pi's extensibility.
+Messages from WhatsApp (and future channels) route to per-contact agent sessions with shell access, shared brain, and Pi's extensibility.
 
 ## Architecture
 
@@ -31,6 +31,9 @@ src/
   jobs.ts       — Job scheduler: at/every/cron with persistence + agent tool
   routines.ts   — Periodic check-in: scans all chats for ROUTINES.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
+  web.ts        — Web search (Brave) and web fetch tools
+  stt.ts        — Voice message transcription via OpenAI
+  login.ts      — Interactive provider login
 
 defaults/
   SOUL.md       — Default personality (copied to ~/.navi/ on first start)

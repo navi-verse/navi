@@ -2,7 +2,7 @@
 
 A personal assistant powered by [Pi's coding agent SDK](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent).
 
-Messages you send on WhatsApp are routed to a Navi agent session that has shell access, persistent memory, and all of Pi's extensibility (skills, extensions, prompt templates).
+Messages you send on WhatsApp are routed to a Navi agent session that has shell access, a shared brain for long-term knowledge, and Pi's extensibility (skills, extensions, prompt templates).
 
 ## Prerequisites
 
@@ -34,7 +34,6 @@ Settings live in `~/.navi/settings.json` (created on first run):
 ```jsonc
 {
   "allowedJids": ["19995551234@s.whatsapp.net"], // country code + number
-  "systemPrompt": "You are Navi, a helpful assistant...",
   "model": "anthropic/claude-sonnet-4-6",  // provider/model, auto-picked if unset
   "thinkingLevel": "medium",             // off | minimal | low | medium | high | xhigh
   "steeringMode": "all",                 // all | one-at-a-time
@@ -53,40 +52,16 @@ Send these in WhatsApp:
 | /reset  | Clear conversation, start fresh |
 | /help   | Show available commands         |
 
-## Adding capabilities
-
-Pi's extension and skill system works normally:
-
-- **Skills**: Drop a `SKILL.md` into `.pi/skills/` or `~/.pi/agent/skills/`
-- **Extensions**: Add TypeScript extensions to `.pi/extensions/`
-- **Prompt templates**: Add `.md` files to `.pi/prompts/`
-
-Example: add web search by installing a pi package:
-
-```bash
-npx pi install npm:pi-skills --skills brave-search
-```
-
 ## Architecture
 
 ```
-WhatsApp (Baileys)
-  │
-  │  incoming message
-  ▼
-index.ts ── routes by JID ──► agent.ts
-  │                              │
-  │                         createAgentSession()
-  │                         per-contact sessions
-  │                              │
-  │         response text        │
-  ◄──────────────────────────────┘
-  │
-  ▼
-WhatsApp (reply)
+Transport (whatsapp.ts)  →  Channel (channel.ts)  →  Agent (agent.ts)
+creates ChannelContext       commands + routing        Pi SDK sessions
 ```
 
-Each WhatsApp contact gets their own isolated Navi session with separate history and context.
+Each WhatsApp contact gets their own Navi session with separate history and context. Knowledge is shared across all conversations via the brain directory.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.
 
 ## Security notes
 
@@ -96,9 +71,12 @@ Each WhatsApp contact gets their own isolated Navi session with separate history
 ## Data storage
 
 ```
-~/.pi/agent/auth.json   # OAuth credentials (shared with Pi CLI)
 ~/.navi/
-  sessions/             # Per-contact conversation history
+  settings.json         # User config
+  SOUL.md               # Personality (editable)
+  AGENTS.md             # Agent instructions (editable)
+  brain/                # Shared knowledge (GLOBAL.md + agent-created files)
+  chats/                # Per-contact sessions, history, routines, jobs
   whatsapp-auth/        # WhatsApp session credentials (keep private!)
 ```
 

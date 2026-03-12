@@ -1,6 +1,6 @@
 ## Architecture
 
-Three-layer message flow, plus memory and scheduling systems that make Navi proactive.
+Three-layer message flow, plus brain, routines, and jobs that make Navi proactive.
 
 ---
 
@@ -12,8 +12,8 @@ creates ChannelContext       commands + routing        Pi SDK sessions
 ```
 
 - **Transport** — Channel-specific connection (WhatsApp via Baileys). Downloads media, creates a `ChannelContext` with `respond()`, `sendMedia()`, typing indicators. Handles the outbox for file delivery.
-- **Channel** — Shared command handling (`/stop`, `/reset`, `/status`, `/help`) and routing to the agent. Channel-agnostic — any transport that produces a `ChannelContext` plugs in.
-- **Agent** — One Pi SDK session per contact. Sessions persist across restarts via `SessionManager.continueRecent()`. Images pass as `ImageContent` (base64); other media saved to disk with path in prompt.
+- **Channel** — Shared command handling (`/stop`, `/reset`, `/status`, `/help`) and routing to the agent. Channel-agnostic. Any transport that produces a `ChannelContext` plugs in.
+- **Agent** — One Pi SDK session per contact. Sessions persist across restarts via `SessionManager.continueRecent()`. Images pass as `ImageContent` (base64). Other media saved to disk with path in prompt.
 
 ### Media
 
@@ -27,25 +27,58 @@ Send:
 
 ---
 
-### Memory
+### Brain
 
-Two plain files per chat. No embeddings, no vector DB.
+Shared knowledge directory at `~/.navi/brain/`. No embeddings, no vector DB. Just files.
 
 ```
-~/.navi/chats/<chat>/
-  MEMORY.md     ← curated facts, always in system prompt
-  HISTORY.md    ← timestamped event log, grep-searchable
+~/.navi/brain/
+  GLOBAL.md     ← universal facts, always in system prompt
+  NADINE.md     ← agent-created, read on demand
+  ANDY.md       ← agent-created, read on demand
+  HOME.md       ← agent-created, read on demand
+  ...           ← agent organizes however it wants
 ```
 
-**MEMORY.md** — Small, curated. Personal preferences, project context, relationships, ongoing commitments. Always injected into the system prompt so the agent has it every turn. The agent updates it directly via `edit`/`write`.
+**GLOBAL.md** — Always injected into the system prompt. Universal facts like addresses, WiFi passwords, family info, important dates.
 
-**HISTORY.md** — Timestamped summaries of noteworthy interactions. Never loaded into prompt — only accessed on demand when the agent greps for past events. The agent appends entries itself when something worth remembering happens. Format: `[YYYY-MM-DD HH:MM] 2-5 sentence summary`.
+**Everything else** — Agent-created files organized however makes sense (by person, topic, etc.). Read on demand via shell (`cat`, `grep`, `ls`). Never pre-loaded.
 
-Both files are created per chat on first message. The agent's regular tools (`write`, `edit`, `grep`, `read`) work on these files — no special memory API, just files the agent knows about.
+**Privacy** — DM conversations are private. Never reveal what someone said in a DM. But facts about a person (preferences, plans, allergies) live in the brain and can be used anywhere.
+
+Per-chat files that remain:
+- **HISTORY.md** — Timestamped summaries of noteworthy interactions. Grep-searchable, never in prompt.
+- **ROUTINES.md** — Per-chat task list for periodic check-ins.
+- **jobs.json** — Scheduled jobs for this chat.
 
 ---
 
-### Cron
+### Routines
+
+A periodic pulse that lets Navi act without being asked. Each chat has its own routine list.
+
+```
+~/.navi/chats/<chat>/ROUTINES.md
+```
+
+**ROUTINES.md** — A markdown file listing active tasks and watchers. The agent reads and edits this file as tasks come and go.
+
+Example content:
+```markdown
+- Check if Martin sent the mockups (deadline was Wednesday)
+- Monitor NAS backup job, alert if it fails
+- Track BTC price, mention if it moves more than 5% in a day
+```
+
+**Execution cycle** (configurable interval, default 30 minutes):
+1. **Scan** — Iterate all chat dirs under `~/.navi/chats/`, read each ROUTINES.md.
+2. **Decide** — For each non-empty routine list, send it to the LLM. It decides: skip (nothing to do) or act.
+3. **Execute** — If acting, the task goes through the full agent loop (shell access, tools, everything).
+4. **Notify** — If execution produces output worth sharing, deliver it to the chat.
+
+---
+
+### Jobs
 
 Agent-managed job scheduler. Three schedule types:
 
@@ -57,55 +90,36 @@ Agent-managed job scheduler. Three schedule types:
 ~/.navi/chats/<chat>/jobs.json
 ```
 
-Jobs are persisted as JSON per chat. The agent creates, lists, and removes jobs via a `cron` tool. When a job fires, its message is injected into the agent loop — the agent processes it, and the response is delivered to the chat.
+Jobs are persisted as JSON per chat. The agent creates, lists, and removes jobs via a `job` tool. When a job fires, its message is injected into the agent loop and the response is delivered to the chat.
 
-Example jobs:
-- "Remind me to call mom at 6pm" → `at` job
-- "Check server health every hour" → `every` job
-- "Morning briefing at 7:30 on weekdays" → `cron` expression
+Routines are for recurring/situational checks. Jobs are for time-specific triggers. Both can coexist. "Keep an eye on the deploy and tell me if something breaks" is a routine. "Remind me to call mom at 6pm" is a job.
 
 ---
 
-### Heartbeat
+### Prompt System
 
-A periodic pulse that lets Navi act without being asked. Each chat has its own heartbeat.
+Two editable files define Navi's behavior:
 
-```
-~/.navi/chats/<chat>/HEARTBEAT.md
-```
+- **`~/.navi/SOUL.md`** — Personality and identity. Who Navi is.
+- **`~/.navi/AGENTS.md`** — Operational instructions. How Navi works.
 
-**HEARTBEAT.md** — A markdown file listing active tasks and watchers. The agent reads and edits this file as tasks come and go.
+Both are seeded from `defaults/` in the repo on first start. Users can edit them freely. AGENTS.md uses `{{placeholder}}` syntax for dynamic values (contactId, workspace, brainDir, etc.) that get replaced at prompt build time.
 
-Example content:
-```markdown
-- Check if Martin sent the mockups (deadline was Wednesday)
-- Monitor NAS backup job — alert if it fails
-- Track BTC price, mention if it moves more than 5% in a day
-```
-
-**Execution cycle** (configurable interval, default 30 minutes):
-1. **Scan** — Iterate all chat dirs under `~/.navi/chats/`, read each HEARTBEAT.md.
-2. **Decide** — For each non-empty heartbeat, send it to the LLM. It decides: skip (nothing to do) or run (with specific tasks).
-3. **Execute** — If run, the task description goes through the full agent loop (shell access, tools, everything).
-4. **Notify** — If execution produces output worth sharing, deliver it to the chat's channel.
-
-The heartbeat is for recurring/situational checks. Cron is for time-specific triggers. Both can coexist — "check server health every hour" is cron, "keep an eye on the deploy and tell me if something breaks" is heartbeat.
+The system prompt is composed as: SOUL.md + AGENTS.md (with placeholders replaced) + GLOBAL.md content.
 
 ---
 
 ### Per-Chat Isolation
 
-Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own session, memory, heartbeat, and cron jobs — fully isolated by default. This maps naturally to WhatsApp's JID scheme: DMs are private, groups are shared.
+Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own session, history, routines, and jobs. Brain knowledge is shared across all conversations.
 
-| Context | JID | Session | Memory | Heartbeat |
+| Context | JID | Session | Brain | Routines |
 |---|---|---|---|---|
-| Your DM | `you@s.whatsapp.net` | Private | Private | Your tasks |
-| Mom's DM | `mom@s.whatsapp.net` | Private | Private | Mom's tasks |
+| Your DM | `you@s.whatsapp.net` | Private | Shared | Your tasks |
+| Mom's DM | `mom@s.whatsapp.net` | Private | Shared | Mom's tasks |
 | Family group | `family@g.us` | Shared | Shared | Family tasks |
 
-**Privacy by default** — DM conversations are isolated. Knowledge from one contact never leaks to another. Group chats are naturally shared because all members send to the same group JID.
-
-**Tradeoff** — No cross-context knowledge sharing. If you tell Navi something in a DM, it won't know it in the family group. This is intentional (privacy first). Cross-context sharing is a potential future feature.
+**Privacy** — DM conversations are isolated. What someone says in a DM is never revealed elsewhere. But facts about people are shared via brain files, so Navi knows Nadine is vegetarian whether in her DM or the family group.
 
 ---
 
@@ -114,7 +128,11 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
 ```
 ~/.navi/
   settings.json              ← user config
-  soul.md                    ← personality override (optional, falls back to built-in default)
+  SOUL.md                    ← personality (seeded from defaults/)
+  AGENTS.md                  ← agent instructions (seeded from defaults/)
+  brain/                     ← shared knowledge
+    GLOBAL.md                ← universal facts (always in prompt)
+    ...                      ← agent-created files (on demand)
   whatsapp-auth/             ← Baileys session
   chats/
     s_491234567890/           ← individual DM (JID → dir name)
@@ -122,10 +140,9 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
         media/                ← received media files
         outbox/               ← files queued for delivery
       session/                ← Pi SDK session files
-      MEMORY.md               ← long-term facts (in prompt)
       HISTORY.md              ← event log (grep-only)
-      HEARTBEAT.md            ← periodic task list
-      jobs.json               ← cron jobs for this chat
+      ROUTINES.md             ← periodic task list
+      jobs.json               ← scheduled jobs for this chat
       SOUL.md                 ← per-chat personality (optional)
     g_120363012345678901/     ← group chat (same structure)
       ...
@@ -137,11 +154,18 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
 src/
   index.ts        ← entry point, bootstraps everything
   config.ts       ← settings, per-chat path helpers (getChatPaths, getChatDirName)
-  prompts.ts      ← all prompt text: soul, system prompt, heartbeat check
+  prompts.ts      ← system prompt composition and event prompts
   channel.ts      ← ChannelContext interface, handleMessage(), commands
   agent.ts        ← per-chat session management, chat()
+  brain.ts        ← shared brain initialization (GLOBAL.md) and history seeding
+  jobs.ts         ← job scheduler: at/every/cron + agent tool
+  routines.ts     ← periodic check-in: scans all chats for ROUTINES.md
   whatsapp.ts     ← Baileys transport, per-chat media + outbox
-  memory.ts       ← memory file seeding (MEMORY.md + HISTORY.md) and loading
-  cron.ts         ← job scheduler: at/every/cron + agent tool
-  heartbeat.ts    ← periodic pulse: scans all chats for HEARTBEAT.md
+  web.ts          ← web search (Brave) and web fetch tools
+  stt.ts          ← voice message transcription via OpenAI
+  login.ts        ← interactive provider login
+
+defaults/
+  SOUL.md         ← default personality (copied to ~/.navi/ on first start)
+  AGENTS.md       ← default agent instructions (copied to ~/.navi/ on first start)
 ```
