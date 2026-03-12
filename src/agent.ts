@@ -167,6 +167,17 @@ export async function chat(contactId: string, userMessage: string, images?: Imag
 }
 
 /**
+ * Get context usage for a contact's session (if active).
+ */
+export function getContextUsage(
+	contactId: string,
+): { tokens: number | null; contextWindow: number; percent: number | null } | null {
+	const existing = sessions.get(contactId);
+	if (!existing) return null;
+	return existing.session.getContextUsage() ?? null;
+}
+
+/**
  * Abort the current agent operation for a contact.
  */
 export async function abortSession(contactId: string): Promise<boolean> {

@@ -1,6 +1,6 @@
 // channel.ts — Channel abstraction and shared message handling
 
-import { abortSession, chat, getAuthStorage, resetSession } from "./agent";
+import { abortSession, chat, getAuthStorage, getContextUsage, resetSession } from "./agent";
 import { config, log } from "./config";
 
 export interface ImageAttachment {
@@ -62,6 +62,11 @@ export async function handleMessage(
 		const loggedIn = providers.filter((p) => authStorage.has(p.id));
 		const providerList = loggedIn.map((p) => p.name).join(", ") || "none";
 
+		const ctx_ = getContextUsage(contactId);
+		const ctxLine = ctx_
+			? `📊 *Context:* ${ctx_.tokens != null ? `${Math.round(ctx_.tokens / 1000)}k` : "?"} / ${Math.round(ctx_.contextWindow / 1000)}k tokens (${ctx_.percent != null ? `${Math.round(ctx_.percent)}%` : "?"})`
+			: "📊 *Context:* no active session";
+
 		await ctx.respond(
 			[
 				"🤖 *Navi Status*",
@@ -69,6 +74,7 @@ export async function handleMessage(
 				`🧠 *Model:* ${config.model || "auto"}`,
 				`💭 *Thinking:* ${config.thinkingLevel || "off"}`,
 				`🔌 *Providers:* ${providerList}`,
+				ctxLine,
 				"",
 				"Log in via CLI: npm run login",
 			].join("\n"),
