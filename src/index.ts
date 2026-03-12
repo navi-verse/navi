@@ -3,9 +3,9 @@
 import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
 import { getChatPaths, log, logError } from "./config";
-import { startCron } from "./cron";
-import { startHeartbeat } from "./heartbeat";
-import { cronPrompt } from "./prompts";
+import { reminderPrompt } from "./prompts";
+import { startReminders } from "./reminders";
+import { startRoutines } from "./routines";
 import { connectWhatsApp, getSocket, sendOutboxFiles, splitMessage } from "./whatsapp";
 
 async function main() {
@@ -36,15 +36,15 @@ async function main() {
 		await sendOutboxFiles(sock, contactId, getChatPaths(contactId).outbox);
 	};
 
-	startCron(async (contactId, message) => {
-		const response = await chat(contactId, cronPrompt(message));
-		log(`⏰ ${contactId}: cron → ${response.substring(0, 100)}`);
+	startReminders(async (contactId, message) => {
+		const response = await chat(contactId, reminderPrompt(message));
+		log(`⏰ ${contactId}: reminder → ${response.substring(0, 100)}`);
 		await deliver(contactId, response);
 	});
 
-	startHeartbeat(async (contactId, prompt) => {
+	startRoutines(async (contactId, prompt) => {
 		const response = await chat(contactId, prompt);
-		log(`💓 ${contactId}: heartbeat → ${response.substring(0, 100)}`);
+		log(`🔄 ${contactId}: routine → ${response.substring(0, 100)}`);
 		await deliver(contactId, response);
 	});
 }

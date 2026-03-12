@@ -24,13 +24,17 @@ To add a new channel: create a transport that produces a `ChannelContext`, wire 
 src/
   index.ts      — Entry point, bootstraps agent + transports
   config.ts     — Settings, per-chat path helpers (getChatPaths, getChatDirName)
-  prompts.ts    — All prompt text: soul, system prompt, heartbeat check
+  prompts.ts    — System prompt composition and event prompts
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
   brain.ts      — Shared brain initialization (GLOBAL.md) and history seeding
-  cron.ts       — Job scheduler: at/every/cron with persistence + agent tool
-  heartbeat.ts  — Periodic task pulse: scans all chats for HEARTBEAT.md
+  reminders.ts  — Reminder scheduler: at/every/cron with persistence + agent tool
+  routines.ts   — Periodic check-in: scans all chats for ROUTINES.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
+
+defaults/
+  SOUL.md       — Default personality (copied to ~/.navi/ on first start)
+  AGENTS.md     — Default agent instructions (copied to ~/.navi/ on first start)
 ```
 
 ## Key concepts
@@ -39,6 +43,7 @@ src/
 - **Sessions persist** across restarts via `SessionManager.continueRecent()`
 - **WhatsApp delivers offline messages** on reconnect — no backfill needed
 - **Config** lives at `~/.navi/settings.json`, data at `~/.navi/`
+- **SOUL.md + AGENTS.md** at `~/.navi/` define personality and agent instructions. Seeded from `defaults/` on first start. Uses `{{placeholder}}` syntax for dynamic paths.
 - **Shared brain** at `~/.navi/brain/` — GLOBAL.md always loaded, other files read on demand via shell. Agent self-organizes by person/topic.
 - **Baileys** must be installed from GitHub (`github:WhiskeySockets/Baileys`), not npm (stale)
 
