@@ -3,8 +3,8 @@
 import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
 import { getChatPaths, log, logError } from "./config";
-import { reminderPrompt } from "./prompts";
-import { startReminders } from "./reminders";
+import { startJobs } from "./jobs";
+import { jobPrompt } from "./prompts";
 import { startRoutines } from "./routines";
 import { connectWhatsApp, getSocket, sendOutboxFiles, splitMessage } from "./whatsapp";
 
@@ -36,9 +36,9 @@ async function main() {
 		await sendOutboxFiles(sock, contactId, getChatPaths(contactId).outbox);
 	};
 
-	startReminders(async (contactId, message) => {
-		const response = await chat(contactId, reminderPrompt(message));
-		log(`⏰ ${contactId}: reminder → ${response.substring(0, 100)}`);
+	startJobs(async (contactId, message) => {
+		const response = await chat(contactId, jobPrompt(message));
+		log(`⏰ ${contactId}: job → ${response.substring(0, 100)}`);
 		await deliver(contactId, response);
 	});
 

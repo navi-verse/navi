@@ -28,7 +28,7 @@ src/
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()
   brain.ts      — Shared brain initialization (GLOBAL.md) and history seeding
-  reminders.ts  — Reminder scheduler: at/every/cron with persistence + agent tool
+  jobs.ts       — Job scheduler: at/every/cron with persistence + agent tool
   routines.ts   — Periodic check-in: scans all chats for ROUTINES.md
   whatsapp.ts   — Baileys WhatsApp transport, media + outbox per chat
 

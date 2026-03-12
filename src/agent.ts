@@ -17,8 +17,8 @@ import {
 import { initBrain, initHistory, loadGlobal } from "./brain";
 import type { ImageAttachment } from "./channel";
 import { brainDir, config, dataDir, getChatPaths, log } from "./config";
+import { createJobTool } from "./jobs";
 import { buildSystemPrompt } from "./prompts";
-import { createReminderTool } from "./reminders";
 import { initRoutines } from "./routines";
 import { webFetchTool, webSearchTool } from "./web";
 
@@ -129,7 +129,7 @@ async function getSession(contactId: string) {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(paths.workspace, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
-		customTools: [createReminderTool(contactId, paths.reminders), webSearchTool, webFetchTool],
+		customTools: [createJobTool(contactId, paths.jobs), webSearchTool, webFetchTool],
 	});
 
 	sessions.set(contactId, result);

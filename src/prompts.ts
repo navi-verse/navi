@@ -38,8 +38,8 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 	return lines.join("\n");
 }
 
-export function reminderPrompt(message: string) {
-	return `[Reminder firing] ${new Date().toISOString()}\n\n${message}`;
+export function jobPrompt(message: string) {
+	return `[Job firing] ${new Date().toISOString()}\n\n${message}`;
 }
 
 export function routineCheckPrompt(content: string) {

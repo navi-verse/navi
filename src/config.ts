@@ -145,7 +145,7 @@ export interface ChatPaths {
 	session: string;
 	history: string;
 	routines: string;
-	reminders: string;
+	jobs: string;
 	soul: string;
 }
 
@@ -173,7 +173,7 @@ export function getChatPaths(contactId: string): ChatPaths {
 		session: join(root, "session"),
 		history: join(root, "HISTORY.md"),
 		routines: join(root, "ROUTINES.md"),
-		reminders: join(root, "reminders.json"),
+		jobs: join(root, "jobs.json"),
 		soul: join(root, "SOUL.md"),
 	};
 }
