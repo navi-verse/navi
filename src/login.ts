@@ -115,7 +115,7 @@ async function main() {
 	console.log(`\n  0. Exit`);
 
 	const choice = await ask("\nSelect provider: ");
-	const num = Number.parseInt(choice);
+	const num = Number.parseInt(choice, 10);
 
 	if (num === 0 || Number.isNaN(num)) {
 		rl.close();
