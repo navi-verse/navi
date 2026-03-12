@@ -12,7 +12,6 @@ interface BuildSystemPromptOptions {
 	history: string;
 	routines: string;
 	globalContent: string;
-	legacyMemoryPath: string | null;
 }
 
 export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
@@ -26,12 +25,6 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 
 	const lines = [`<!-- source: ${opts.soulSource} -->`, opts.soul, "", `<!-- source: ${opts.agentsSource} -->`, agents];
 
-	if (opts.legacyMemoryPath) {
-		lines.push(
-			"",
-			`Legacy migration: ${opts.legacyMemoryPath} exists from the old per-chat memory system. Read it, move useful content into brain files, then delete it.`,
-		);
-	}
 	if (opts.globalContent) {
 		lines.push("", `<!-- source: ${opts.brainDir}/GLOBAL.md -->`, "", opts.globalContent);
 	}

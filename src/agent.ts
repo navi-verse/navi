@@ -98,7 +98,6 @@ async function getSession(contactId: string) {
 	const hasChatSoul = existsSync(paths.soul);
 	const soul = hasChatSoul ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
 	const soulSource = hasChatSoul ? paths.soul : config.soulSource;
-	const legacyMemoryPath = join(paths.root, "MEMORY.md");
 	const fullPrompt = buildSystemPrompt({
 		soul,
 		soulSource,
@@ -111,7 +110,6 @@ async function getSession(contactId: string) {
 		history: paths.history,
 		routines: paths.routines,
 		globalContent: loadGlobal(),
-		legacyMemoryPath: existsSync(legacyMemoryPath) ? legacyMemoryPath : null,
 	});
 
 	const resourceLoader = new DefaultResourceLoader({

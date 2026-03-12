@@ -23,7 +23,7 @@ To add a new channel: create a transport that produces a `ChannelContext`, wire 
 ```
 src/
   index.ts      — Entry point, bootstraps agent + transports
-  config.ts     — Settings, per-contact path helpers, migration
+  config.ts     — Settings, per-contact path helpers
   prompts.ts    — System prompt composition and event prompts
   channel.ts    — ChannelContext interface, handleMessage(), commands
   agent.ts      — Per-chat session management, chat(), abortSession(), resetSession()

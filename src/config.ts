@@ -1,15 +1,6 @@
-// config.ts — Settings, per-contact path helpers, and migration
+// config.ts — Settings + per-contact path helpers
 
-import {
-	copyFileSync,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	renameSync,
-	statSync,
-	writeFileSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -113,35 +104,9 @@ function loadFile(path: string): { content: string; source: string } {
 	return { content: "", source: path };
 }
 
-// ── Migration ────────────────────────────────────────
-
-function migrate() {
-	// chats/ → workspace/
-	const oldChatsDir = join(dataDir, "chats");
-	const newWorkspaceDir = join(dataDir, "workspace");
-	if (existsSync(oldChatsDir) && !existsSync(newWorkspaceDir)) {
-		renameSync(oldChatsDir, newWorkspaceDir);
-		console.log("📦 Migrated chats/ → workspace/");
-	}
-
-	// workspace/<contact>/workspace/ → workspace/<contact>/playground/
-	if (existsSync(newWorkspaceDir)) {
-		for (const entry of readdirSync(newWorkspaceDir)) {
-			const contactDir = join(newWorkspaceDir, entry);
-			if (!statSync(contactDir).isDirectory()) continue;
-			const oldPlayground = join(contactDir, "workspace");
-			const newPlayground = join(contactDir, "playground");
-			if (existsSync(oldPlayground) && !existsSync(newPlayground)) {
-				renameSync(oldPlayground, newPlayground);
-			}
-		}
-	}
-}
-
 // ── Config ───────────────────────────────────────────
 
 const settings = loadSettings();
-migrate();
 seedFile(soulPath, "SOUL.md");
 seedFile(agentsPath, "AGENTS.md");
 const soul = loadFile(soulPath);

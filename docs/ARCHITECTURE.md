@@ -153,7 +153,7 @@ Everything is keyed by contact ID (WhatsApp JID). Each contact gets their own se
 ```
 src/
   index.ts        ← entry point, bootstraps everything
-  config.ts       ← settings, per-contact path helpers, migration
+  config.ts       ← settings, per-contact path helpers
   prompts.ts      ← system prompt composition and event prompts
   channel.ts      ← ChannelContext interface, handleMessage(), commands
   agent.ts        ← per-contact session management, chat()
