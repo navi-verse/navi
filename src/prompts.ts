@@ -31,10 +31,11 @@ interface BuildSystemPromptOptions {
 	soul: string;
 	cwd: string;
 	outbox: string;
-	memory: string;
+	brainDir: string;
 	history: string;
 	heartbeat: string;
-	memoryContent: string;
+	globalContent: string;
+	legacyMemoryPath: string | null;
 	isGroup?: boolean;
 }
 
@@ -54,9 +55,16 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		`To send files back: write them to ${opts.outbox}/ and they'll be delivered after your response.`,
 		"Images, videos, audio, and documents are all supported.",
 		"",
-		"You have a two-layer memory system:",
-		`- ${opts.memory} — Long-term memory of curated facts (personal preferences, relationships, projects, important dates). Update it when you learn important things. Keep it concise and organized.`,
-		`- ${opts.history} — Timestamped log of noteworthy interactions. Append a 2-5 sentence summary when something worth remembering happens. Format: [YYYY-MM-DD HH:MM] summary.`,
+		`You have a brain at ${opts.brainDir}/. This is your long-term knowledge — about people, places, topics, anything worth remembering.`,
+		"",
+		"- GLOBAL.md is always loaded below. Put universally important facts here (addresses, WiFi, family plans).",
+		"- Create other files as needed — by person (NADINE.md), by topic (HOME.md), however you like.",
+		"- Use shell to read brain files when you need context: cat, grep, ls.",
+		`- ${opts.history} — This conversation's log. Append timestamped summaries when something worth remembering happens. Format: [YYYY-MM-DD HH:MM] summary.`,
+		"",
+		"Keep brain files concise and well-organized. You own them — create, update, reorganize freely.",
+		"",
+		"Privacy: DM conversations are private — never reveal what someone said in a DM. But facts about a person belong in the brain and can be used anywhere.",
 		"",
 		`You have a heartbeat task list at ${opts.heartbeat}.`,
 		"This file is checked periodically and sent to you for action.",
@@ -86,7 +94,7 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 			"Group chat rules:",
 			"- Messages arrive as [Name]: text — this tells you who's speaking.",
 			"- Always attribute information to the person who said it.",
-			'- In memory and history, always record who said or requested something (e.g. "Alice prefers dark mode", "[2025-03-11 14:00] Bob asked to set up a reminder").',
+			'- In brain files and history, always record who said or requested something (e.g. "Alice prefers dark mode", "[2025-03-11 14:00] Bob asked to set up a reminder").',
 			"- Never mix up or merge preferences/facts between participants.",
 			"",
 			"When to speak:",
@@ -105,8 +113,14 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 			"Think like a human in a group chat: don't respond to every message. Quality > quantity. Participate, don't dominate.",
 		);
 	}
-	if (opts.memoryContent) {
-		lines.push("", `Your long-term memory (from ${opts.memory}):`, "", opts.memoryContent);
+	if (opts.legacyMemoryPath) {
+		lines.push(
+			"",
+			`Legacy migration: ${opts.legacyMemoryPath} exists from the old per-chat memory system. Read it, move useful content into brain files, then delete it.`,
+		);
+	}
+	if (opts.globalContent) {
+		lines.push("", `Your brain (from ${opts.brainDir}/GLOBAL.md):`, "", opts.globalContent);
 	}
 	return lines.join("\n");
 }
@@ -129,7 +143,7 @@ export function heartbeatCheckPrompt(heartbeat: string, content: string) {
 		"",
 		"Be proactive — don't just skip every time. Use heartbeats for background work:",
 		"- Act on any tasks that are due or actionable.",
-		"- Periodically review and tidy MEMORY.md — distill recent history into long-term memory, remove outdated info.",
+		"- Periodically review and tidy brain files — distill recent history into long-term knowledge, remove outdated info.",
 		"- Do useful background work: check on projects, organize files, etc.",
 		"",
 		"When to reach out:",

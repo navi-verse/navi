@@ -14,11 +14,11 @@ import {
 	SessionManager,
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
+import { initBrain, initHistory, loadGlobal } from "./brain";
 import type { ImageAttachment } from "./channel";
-import { config, dataDir, getChatPaths, log } from "./config";
+import { brainDir, config, dataDir, getChatPaths, log } from "./config";
 import { createCronTool } from "./cron";
 import { initHeartbeat } from "./heartbeat";
-import { initMemory, loadMemory } from "./memory";
 import { buildSystemPrompt } from "./prompts";
 import { webFetchTool, webSearchTool } from "./web";
 
@@ -38,6 +38,7 @@ export function initAgent() {
 	modelRegistry = new ModelRegistry(authStorage);
 
 	mkdirSync(config.chatsDir, { recursive: true });
+	initBrain();
 
 	// Resolve model — either explicit or auto-pick from first logged-in provider
 	if (!config.model) {
@@ -57,7 +58,7 @@ export function initAgent() {
 
 /**
  * Get or create a Navi session for a contact.
- * Each contact gets their own isolated session with its own workspace, memory, and heartbeat.
+ * Each contact gets their own isolated session with its own workspace and heartbeat.
  */
 async function getSession(contactId: string) {
 	const existing = sessions.get(contactId);
@@ -73,7 +74,7 @@ async function getSession(contactId: string) {
 	mkdirSync(paths.outbox, { recursive: true });
 	mkdirSync(paths.session, { recursive: true });
 
-	initMemory(paths.memory, paths.history);
+	initHistory(paths.history);
 	initHeartbeat(paths.heartbeat);
 
 	const settingsManager = SettingsManager.create(paths.workspace);
@@ -95,14 +96,16 @@ async function getSession(contactId: string) {
 	});
 
 	const soul = existsSync(paths.soul) ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
+	const legacyMemoryPath = join(paths.root, "MEMORY.md");
 	const fullPrompt = buildSystemPrompt({
 		soul,
 		cwd: paths.workspace,
 		outbox: paths.outbox,
-		memory: paths.memory,
+		brainDir,
 		history: paths.history,
 		heartbeat: paths.heartbeat,
-		memoryContent: loadMemory(paths.memory),
+		globalContent: loadGlobal(),
+		legacyMemoryPath: existsSync(legacyMemoryPath) ? legacyMemoryPath : null,
 		isGroup: contactId.endsWith("@g.us"),
 	});
 
