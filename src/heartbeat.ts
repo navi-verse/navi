@@ -2,7 +2,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { config, contactIdFromDirName } from "./config";
+import { config, contactIdFromDirName, log, logError } from "./config";
 import { heartbeatCheckPrompt } from "./prompts";
 
 export function initHeartbeat(heartbeat: string) {
@@ -50,7 +50,7 @@ export function startHeartbeat(callback: HeartbeatCallback) {
 				try {
 					await callback(contactId, prompt);
 				} catch (err) {
-					console.error(`💓 ${contactId}: error`, err);
+					logError(`💓 ${contactId}: error`, err);
 				}
 			}
 		} finally {
@@ -58,5 +58,5 @@ export function startHeartbeat(callback: HeartbeatCallback) {
 		}
 	}, intervalMs);
 
-	console.log(`💓 Heartbeat: every ${config.heartbeatIntervalSeconds ?? 1800}s, scanning all chats`);
+	log(`💓 Heartbeat: every ${config.heartbeatIntervalSeconds ?? 1800}s, scanning all chats`);
 }

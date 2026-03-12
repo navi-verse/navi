@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { getAuthStorage } from "./agent";
+import { logError } from "./config";
 
 const MIME_TYPES: Record<string, string> = {
 	".ogg": "audio/ogg",
@@ -35,7 +36,7 @@ export async function transcribe(filePath: string): Promise<string | null> {
 	});
 
 	if (!res.ok) {
-		console.error(`🎤 STT error: ${res.status} ${await res.text()}`);
+		logError(`🎤 STT error: ${res.status} ${await res.text()}`);
 		return null;
 	}
 

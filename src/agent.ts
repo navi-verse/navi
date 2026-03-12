@@ -15,7 +15,7 @@ import {
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
 import type { ImageAttachment } from "./channel";
-import { config, dataDir, getChatPaths } from "./config";
+import { config, dataDir, getChatPaths, log } from "./config";
 import { createCronTool } from "./cron";
 import { initHeartbeat } from "./heartbeat";
 import { initMemory, loadMemory } from "./memory";
@@ -49,10 +49,10 @@ export function initAgent() {
 		}
 	}
 	if (config.model) {
-		console.log(`📌 Model: ${config.model}`);
+		log(`📌 Model: ${config.model}`);
 	}
 
-	console.log("🤖 Navi: initialized");
+	log("🤖 Navi: initialized");
 }
 
 /**
@@ -125,7 +125,8 @@ async function getSession(contactId: string) {
 	});
 
 	sessions.set(contactId, result);
-	console.log(`🆕 ${contactId}: session created`);
+	const resumed = result.session.sessionManager.getEntries().length > 0;
+	log(`${resumed ? "♻️" : "🆕"} ${contactId}: session ${resumed ? "resumed" : "created"}`);
 
 	return result;
 }
@@ -146,13 +147,13 @@ export async function chat(contactId: string, userMessage: string, images?: Imag
 		} else if (event.type === "tool_execution_start") {
 			toolTimers.set(event.toolCallId, Date.now());
 			const args = JSON.stringify(event.args).substring(0, 200);
-			console.log(`🔧 ${contactId}: ${event.toolName} → ${args}`);
+			log(`🔧 ${contactId}: ${event.toolName} → ${args}`);
 		} else if (event.type === "tool_execution_end") {
 			const started = toolTimers.get(event.toolCallId);
 			const duration = started ? `${((Date.now() - started) / 1000).toFixed(1)}s` : "";
 			toolTimers.delete(event.toolCallId);
 			const status = event.isError ? "❌" : "✅";
-			console.log(`${status} ${contactId}: ${event.toolName} ← ${duration}`);
+			log(`${status} ${contactId}: ${event.toolName} ← ${duration}`);
 		}
 	});
 
@@ -173,7 +174,7 @@ export async function abortSession(contactId: string): Promise<boolean> {
 	if (!existing) return false;
 
 	await existing.session.abort();
-	console.log(`⏹️ ${contactId}: session aborted`);
+	log(`⏹️ ${contactId}: session aborted`);
 	return true;
 }
 
@@ -192,5 +193,5 @@ export async function resetSession(contactId: string): Promise<void> {
 		rmSync(paths.session, { recursive: true });
 	}
 
-	console.log(`🗑️ ${contactId}: session reset`);
+	log(`🗑️ ${contactId}: session reset`);
 }

@@ -106,6 +106,19 @@ export const config = {
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };
 
+// ── Logging ─────────────────────────────────────────
+
+function ts(): string {
+	const d = new Date();
+	const hh = String(d.getHours()).padStart(2, "0");
+	const mm = String(d.getMinutes()).padStart(2, "0");
+	const ss = String(d.getSeconds()).padStart(2, "0");
+	return `${hh}:${mm}:${ss}`;
+}
+
+export const log = (...args: unknown[]) => console.log(`[${ts()}]`, ...args);
+export const logError = (...args: unknown[]) => console.error(`[${ts()}]`, ...args);
+
 // ── Per-chat paths ───────────────────────────────────
 
 export interface ChatPaths {

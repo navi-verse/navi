@@ -1,7 +1,7 @@
 // channel.ts — Channel abstraction and shared message handling
 
 import { abortSession, chat, getAuthStorage, resetSession } from "./agent";
-import { config } from "./config";
+import { config, log } from "./config";
 
 export interface ImageAttachment {
 	type: "image";
@@ -91,13 +91,13 @@ export async function handleMessage(
 	}
 
 	if (!response || response === "[skip]") {
-		console.log(`⏭️ ${contactId} (${duration}s): ${reactMatch ? reactMatch[1] : "skipped"}`);
+		log(`⏭️ ${contactId} (${duration}s): ${reactMatch ? reactMatch[1] : "skipped"}`);
 		await ctx.stopTyping();
 		return;
 	}
 
 	const logPreview = response.replace(/\n/g, " ").substring(0, 80);
-	console.log(`🤖 ${contactId} (${duration}s): ${logPreview}${response.length > 80 ? "..." : ""}`);
+	log(`🤖 ${contactId} (${duration}s): ${logPreview}${response.length > 80 ? "..." : ""}`);
 
 	await ctx.stopTyping();
 	await ctx.respond(response);
