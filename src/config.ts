@@ -1,9 +1,8 @@
 // config.ts — Settings + per-chat path helpers
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
-import { defaultSoul } from "./prompts";
+import { dirname, join } from "node:path";
 
 export const dataDir = join(homedir(), ".navi");
 export const brainDir = join(dataDir, "brain");
@@ -87,22 +86,38 @@ function loadSettings(): NaviSettings {
 	}
 }
 
-// ── Load soul ────────────────────────────────────────
+// ── Load soul + agents ──────────────────────────────
 
-const soulPath = join(dataDir, "soul.md");
+const defaultsDir = join(dirname(import.meta.dirname), "defaults");
+const soulPath = join(dataDir, "SOUL.md");
+const agentsPath = join(dataDir, "AGENTS.md");
 
-function loadSoul(): string {
-	if (existsSync(soulPath)) return readFileSync(soulPath, "utf-8").trim();
-	return defaultSoul;
+function seedFile(target: string, defaultName: string) {
+	if (!existsSync(target)) {
+		const src = join(defaultsDir, defaultName);
+		if (existsSync(src)) copyFileSync(src, target);
+	}
+}
+
+function loadFile(path: string): { content: string; source: string } {
+	if (existsSync(path)) return { content: readFileSync(path, "utf-8").trim(), source: path };
+	return { content: "", source: path };
 }
 
 // ── Config ───────────────────────────────────────────
 
 const settings = loadSettings();
+seedFile(soulPath, "SOUL.md");
+seedFile(agentsPath, "AGENTS.md");
+const soul = loadFile(soulPath);
+const agents = loadFile(agentsPath);
 
 export const config = {
 	...settings,
-	soul: loadSoul(),
+	soul: soul.content,
+	soulSource: soul.source,
+	agents: agents.content,
+	agentsSource: agents.source,
 	chatsDir: join(dataDir, "chats"),
 	baileysAuthDir: join(dataDir, "whatsapp-auth"),
 };

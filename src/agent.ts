@@ -95,18 +95,23 @@ async function getSession(contactId: string) {
 		skills: config.skills,
 	});
 
-	const soul = existsSync(paths.soul) ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
+	const hasChatSoul = existsSync(paths.soul);
+	const soul = hasChatSoul ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
+	const soulSource = hasChatSoul ? paths.soul : config.soulSource;
 	const legacyMemoryPath = join(paths.root, "MEMORY.md");
 	const fullPrompt = buildSystemPrompt({
 		soul,
-		cwd: paths.workspace,
+		soulSource,
+		agents: config.agents,
+		agentsSource: config.agentsSource,
+		contactId,
+		workspace: paths.workspace,
 		outbox: paths.outbox,
 		brainDir,
 		history: paths.history,
 		routines: paths.routines,
 		globalContent: loadGlobal(),
 		legacyMemoryPath: existsSync(legacyMemoryPath) ? legacyMemoryPath : null,
-		isGroup: contactId.endsWith("@g.us"),
 	});
 
 	const resourceLoader = new DefaultResourceLoader({

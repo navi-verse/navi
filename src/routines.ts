@@ -45,7 +45,7 @@ export function startRoutines(callback: RoutineCallback) {
 				if (!hasRealTasks(content)) continue;
 
 				const contactId = contactIdFromDirName(entry);
-				const prompt = routineCheckPrompt(routinesPath, content);
+				const prompt = routineCheckPrompt(content);
 
 				try {
 					await callback(contactId, prompt);
