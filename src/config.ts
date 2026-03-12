@@ -3,6 +3,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import pino from "pino";
 
 export const dataDir = join(homedir(), ".navi");
 export const brainDir = join(dataDir, "brain");
@@ -126,6 +127,10 @@ export const config = {
 
 // ── Logging ─────────────────────────────────────────
 
+const logFile = join(dataDir, "navi.log");
+
+const logger = pino({ level: "info" }, pino.destination({ dest: logFile, sync: true, mkdir: true }));
+
 function ts(): string {
 	const d = new Date();
 	const hh = String(d.getHours()).padStart(2, "0");
@@ -134,8 +139,25 @@ function ts(): string {
 	return `${hh}:${mm}:${ss}`;
 }
 
-export const log = (...args: unknown[]) => console.log(`[${ts()}]`, ...args);
-export const logError = (...args: unknown[]) => console.error(`[${ts()}]`, ...args);
+function extractFields(args: unknown[]): { msg: string; fields: Record<string, unknown> } {
+	const last = args[args.length - 1];
+	const hasFields =
+		args.length > 1 && typeof last === "object" && last !== null && !(last instanceof Error) && !Array.isArray(last);
+	const fields = hasFields ? (args.pop() as Record<string, unknown>) : {};
+	const msg = args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+	return { msg, fields };
+}
+
+export const log = (...args: unknown[]) => {
+	const { msg, fields } = extractFields(args);
+	console.log(`[${ts()}]`, msg);
+	logger.info(fields, msg);
+};
+export const logError = (...args: unknown[]) => {
+	const { msg, fields } = extractFields(args);
+	console.error(`[${ts()}]`, msg);
+	logger.error(fields, msg);
+};
 
 // ── Per-contact paths ────────────────────────────────
 

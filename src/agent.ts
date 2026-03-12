@@ -133,7 +133,7 @@ async function getSession(contactId: string, contactName = "") {
 
 	sessions.set(contactId, result);
 	const resumed = result.session.sessionManager.getEntries().length > 0;
-	log(`${resumed ? "♻️" : "🆕"} ${contactId}: session ${resumed ? "resumed" : "created"}`);
+	log(`${resumed ? "♻️" : "🆕"} ${contactId}: session ${resumed ? "resumed" : "created"}`, { contactId });
 
 	return result;
 }
@@ -159,13 +159,18 @@ export async function chat(
 		} else if (event.type === "tool_execution_start") {
 			toolTimers.set(event.toolCallId, Date.now());
 			const args = JSON.stringify(event.args).substring(0, 200);
-			log(`🔧 ${contactId}: ${event.toolName} → ${args}`);
+			log(`🔧 ${contactId}: ${event.toolName} → ${args}`, { contactId, tool: event.toolName });
 		} else if (event.type === "tool_execution_end") {
 			const started = toolTimers.get(event.toolCallId);
 			const duration = started ? `${((Date.now() - started) / 1000).toFixed(1)}s` : "";
 			toolTimers.delete(event.toolCallId);
 			const status = event.isError ? "❌" : "✅";
-			log(`${status} ${contactId}: ${event.toolName} ← ${duration}`);
+			const elapsed = started ? (Date.now() - started) / 1000 : undefined;
+			log(`${status} ${contactId}: ${event.toolName} ← ${duration}`, {
+				contactId,
+				tool: event.toolName,
+				duration: elapsed,
+			});
 		}
 	});
 
@@ -200,7 +205,7 @@ export async function abortSession(contactId: string): Promise<boolean> {
 	if (!existing) return false;
 
 	await existing.session.abort();
-	log(`⏹️ ${contactId}: session aborted`);
+	log(`⏹️ ${contactId}: session aborted`, { contactId });
 	return true;
 }
 
@@ -219,5 +224,5 @@ export async function resetSession(contactId: string): Promise<void> {
 		rmSync(paths.session, { recursive: true });
 	}
 
-	log(`🗑️ ${contactId}: session reset`);
+	log(`🗑️ ${contactId}: session reset`, { contactId });
 }

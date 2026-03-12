@@ -282,7 +282,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			if (!jid) continue;
 
 			if (config.allowedJids.length > 0 && !config.allowedJids.includes(jid)) {
-				log(`⛔ ${jid}: blocked`);
+				log(`⛔ ${jid}: blocked`, { contactId: jid });
 				continue;
 			}
 
@@ -306,7 +306,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			}
 
 			const logText = messageText || `[${images.length} image(s)]`;
-			log(`📩 ${jid}: ${logText.substring(0, 80)}${logText.length > 80 ? "..." : ""}`);
+			log(`📩 ${jid}: ${logText.substring(0, 80)}${logText.length > 80 ? "..." : ""}`, { contactId: jid });
 
 			const ctx: ChannelContext = {
 				async respond(response: string) {
@@ -352,7 +352,7 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 				await onMessage(jid, promptText, ctx, images.length ? images : undefined, msg.pushName || undefined);
 				await sendOutboxFiles(sock, jid, chatPaths.outbox);
 			} catch (err) {
-				logError(`❌ ${jid}: message handler error`, err);
+				logError(`❌ ${jid}: message handler error`, { contactId: jid, err: String(err) });
 				await ctx.respond("⚠️ Something went wrong processing your message. Try again.");
 			}
 		}

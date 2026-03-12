@@ -111,7 +111,10 @@ function scheduleNext() {
 		timer = null;
 
 		try {
-			log(`⏰ ${chat.contactId}: job fired [${job.id}] ${job.label || job.message.substring(0, 40)}`);
+			log(`⏰ ${chat.contactId}: job fired [${job.id}] ${job.label || job.message.substring(0, 40)}`, {
+				contactId: chat.contactId,
+				jobId: job.id,
+			});
 
 			if (fireCallback) {
 				await fireCallback(chat.contactId, job.message);
@@ -122,7 +125,11 @@ function scheduleNext() {
 				saveJobsFile(chat.jobsPath, chat.jobs);
 			}
 		} catch (err) {
-			logError(`⏰ ${chat.contactId}: job error [${job.id}]`, err);
+			logError(`⏰ ${chat.contactId}: job error [${job.id}]`, {
+				contactId: chat.contactId,
+				jobId: job.id,
+				err: String(err),
+			});
 		}
 
 		scheduleNext();

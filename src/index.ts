@@ -38,13 +38,13 @@ async function main() {
 
 	startJobs(async (contactId, message) => {
 		const response = await chat(contactId, jobPrompt(message));
-		log(`⏰ ${contactId}: job → ${response.substring(0, 100)}`);
+		log(`⏰ ${contactId}: job → ${response.substring(0, 100)}`, { contactId });
 		await deliver(contactId, response);
 	});
 
 	startRoutines(async (contactId, prompt) => {
 		const response = await chat(contactId, prompt);
-		log(`🔄 ${contactId}: routine → ${response.substring(0, 100)}`);
+		log(`🔄 ${contactId}: routine → ${response.substring(0, 100)}`, { contactId });
 		await deliver(contactId, response);
 	});
 }

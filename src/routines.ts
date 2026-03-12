@@ -50,7 +50,7 @@ export function startRoutines(callback: RoutineCallback) {
 				try {
 					await callback(contactId, prompt);
 				} catch (err) {
-					logError(`🔄 ${contactId}: routine error`, err);
+					logError(`🔄 ${contactId}: routine error`, { contactId, err: String(err) });
 				}
 			}
 		} finally {
