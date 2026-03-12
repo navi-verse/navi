@@ -1,6 +1,6 @@
 // config.ts — Settings + per-contact path helpers
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import pino from "pino";
@@ -95,10 +95,17 @@ const defaultsDir = join(dirname(import.meta.dirname), "defaults");
 const soulPath = join(dataDir, "SOUL.md");
 const agentsPath = join(dataDir, "AGENTS.md");
 
-function seedFile(target: string, defaultName: string) {
-	if (!existsSync(target)) {
-		const src = join(defaultsDir, defaultName);
-		if (existsSync(src)) copyFileSync(src, target);
+function seedDefaults(target: string, src: string) {
+	if (!existsSync(src)) return;
+	mkdirSync(target, { recursive: true });
+	for (const entry of readdirSync(src, { withFileTypes: true })) {
+		const srcPath = join(src, entry.name);
+		const destPath = join(target, entry.name);
+		if (entry.isDirectory()) {
+			seedDefaults(destPath, srcPath);
+		} else if (!existsSync(destPath)) {
+			copyFileSync(srcPath, destPath);
+		}
 	}
 }
 
@@ -110,8 +117,7 @@ function loadFile(path: string): { content: string; source: string } {
 // ── Config ───────────────────────────────────────────
 
 const settings = loadSettings();
-seedFile(soulPath, "SOUL.md");
-seedFile(agentsPath, "AGENTS.md");
+seedDefaults(dataDir, defaultsDir);
 const soul = loadFile(soulPath);
 const agents = loadFile(agentsPath);
 
