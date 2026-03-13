@@ -8,7 +8,7 @@ Personal AI assistant that lives in your WhatsApp. Powered by [Pi's coding agent
 git clone https://github.com/Naviverse/navi.git && cd navi
 npm install
 npm run login        # authenticate with an AI provider
-npm run dev          # start — scan QR code with WhatsApp
+npm start            # start — scan QR code with WhatsApp
 ```
 
 On first launch, scan the QR code with **WhatsApp > Linked Devices > Link a Device**.
@@ -19,7 +19,7 @@ On first launch, scan the QR code with **WhatsApp > Linked Devices > Link a Devi
 
 ```jsonc
 {
-  "allowedJids": ["19995551234@s.whatsapp.net"],  // country code + number
+  "allowedJids": ["41791235599@s.whatsapp.net"],  // country code + number
   "model": "anthropic/claude-sonnet-4-6"           // provider/model
 }
 ```
@@ -31,7 +31,7 @@ Don't know your JID? Send a message — Navi logs the sender ID to the console.
 Install as a macOS launchd service (auto-starts on login, auto-restarts on crash):
 
 ```bash
-bin/navi install      # build + register service + symlink CLI
+./bin/navi install     # build + register service + symlink CLI
 ```
 
 Then from anywhere:
