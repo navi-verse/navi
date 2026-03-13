@@ -63,8 +63,8 @@ const EXT_TO_MIME: Record<string, string> = {
 	".mp4": "video/mp4",
 	".mkv": "video/x-matroska",
 	".avi": "video/x-msvideo",
-	".ogg": "audio/ogg",
-	".mp3": "audio/mpeg",
+	".ogg": "audio/ogg; codecs=opus",
+	".mp3": "audio/mp4",
 	".m4a": "audio/mp4",
 	".wav": "audio/wav",
 	".pdf": "application/pdf",
@@ -209,6 +209,7 @@ const sendMediaParams = Type.Object({
 	path: Type.String({ description: "Absolute path to the file to send" }),
 	caption: Type.Optional(Type.String({ description: "Caption for images/videos/documents" })),
 	voiceNote: Type.Optional(Type.Boolean({ description: "Send audio as a voice note (default: true for .ogg)" })),
+	gif: Type.Optional(Type.Boolean({ description: "Send video as a looping GIF (default: true for .gif)" })),
 });
 
 type SendMediaParams = Static<typeof sendMediaParams>;
@@ -237,10 +238,16 @@ export function createSendMediaTool(contactId: string): ToolDefinition {
 				const ext = extname(filePath).toLowerCase();
 				const mime = mimeForExt(filePath);
 
-				if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
+				const isGif = params.gif ?? ext === ".gif";
+
+				if ([".jpg", ".jpeg", ".png", ".webp"].includes(ext) && !isGif) {
 					await sock.sendMessage(contactId, { image: buffer, caption: params.caption });
-				} else if ([".mp4", ".mkv", ".avi"].includes(ext)) {
-					await sock.sendMessage(contactId, { video: buffer, caption: params.caption });
+				} else if ([".mp4", ".mkv", ".avi", ".gif"].includes(ext) || isGif) {
+					await sock.sendMessage(contactId, {
+						video: buffer,
+						gifPlayback: isGif,
+						caption: params.caption,
+					});
 				} else if ([".ogg", ".mp3", ".m4a", ".wav"].includes(ext)) {
 					const ptt = params.voiceNote ?? ext === ".ogg";
 					await sock.sendMessage(contactId, { audio: buffer, mimetype: mime, ptt });
@@ -357,7 +364,9 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 					const ext = extname(filePath).toLowerCase();
 					const mime = options?.mimeType || mimeForExt(filePath);
 
-					if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
+					if (ext === ".gif") {
+						await sock.sendMessage(jid, { video: buffer, gifPlayback: true, caption: options?.caption });
+					} else if ([".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
 						await sock.sendMessage(jid, { image: buffer, caption: options?.caption });
 					} else if ([".mp4", ".mkv", ".avi"].includes(ext)) {
 						await sock.sendMessage(jid, { video: buffer, caption: options?.caption });
