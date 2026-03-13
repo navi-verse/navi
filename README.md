@@ -13,6 +13,8 @@ npm start            # start — scan QR code with WhatsApp
 
 On first launch, scan the QR code with **WhatsApp > Linked Devices > Link a Device**.
 
+> **Note:** Navi must be linked to a **dedicated phone number**, not your personal one. Running Navi on the same number you message from is not yet supported.
+
 ## Configure
 
 `~/.navi/settings.json` is created on first run. Add your WhatsApp JID to allow messages:
