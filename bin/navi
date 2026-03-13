@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Resolve the project root (where this script lives: <project>/bin/navi)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+NAVI_HOME="$HOME/.navi"
+PLIST_NAME="com.navi.agent"
+PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME.plist"
+STDOUT_LOG="$NAVI_HOME/navi.out.log"
+STDERR_LOG="$NAVI_HOME/navi.err.log"
+DOMAIN="gui/$(id -u)"
+
+generate_plist() {
+	mkdir -p "$(dirname "$PLIST_PATH")"
+	cat > "$PLIST_PATH" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$PLIST_NAME</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$(which node)</string>
+		<string>$PROJECT_DIR/dist/index.js</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>$PROJECT_DIR</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>$(dirname "$(which node)"):$PATH</string>
+		<key>HOME</key>
+		<string>$HOME</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>$STDOUT_LOG</string>
+	<key>StandardErrorPath</key>
+	<string>$STDERR_LOG</string>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+</dict>
+</plist>
+EOF
+	echo "Plist written to $PLIST_PATH"
+}
+
+is_loaded() {
+	launchctl print "$DOMAIN/$PLIST_NAME" &>/dev/null
+}
+
+link_cli() {
+	local target="/usr/local/bin/navi"
+	local source="$SCRIPT_DIR/navi"
+	if [[ -L "$target" && "$(readlink "$target")" == "$source" ]]; then
+		return # already linked
+	fi
+	echo "Linking navi to $target..."
+	if [[ -w "$(dirname "$target")" ]]; then
+		ln -sf "$source" "$target"
+	else
+		sudo ln -sf "$source" "$target"
+	fi
+	echo "You can now run 'navi' from anywhere."
+}
+
+cmd_install() {
+	echo "Building..."
+	(cd "$PROJECT_DIR" && npm run build)
+	generate_plist
+	link_cli
+	if is_loaded; then
+		launchctl bootout "$DOMAIN/$PLIST_NAME" 2>/dev/null || true
+	fi
+	launchctl bootstrap "$DOMAIN" "$PLIST_PATH"
+	echo "Navi installed and started."
+}
+
+cmd_uninstall() {
+	if is_loaded; then
+		launchctl bootout "$DOMAIN/$PLIST_NAME" 2>/dev/null || true
+		echo "Service stopped."
+	fi
+	if [[ -f "$PLIST_PATH" ]]; then
+		rm "$PLIST_PATH"
+		echo "Plist removed."
+	fi
+	local target="/usr/local/bin/navi"
+	if [[ -L "$target" && "$(readlink "$target")" == "$SCRIPT_DIR/navi" ]]; then
+		rm "$target" 2>/dev/null || sudo rm "$target"
+		echo "CLI symlink removed."
+	fi
+	echo "Navi uninstalled."
+}
+
+cmd_start() {
+	if ! [[ -f "$PLIST_PATH" ]]; then
+		echo "Not installed. Run: navi install"
+		exit 1
+	fi
+	if is_loaded; then
+		echo "Already running."
+		exit 0
+	fi
+	launchctl bootstrap "$DOMAIN" "$PLIST_PATH"
+	echo "Navi started."
+}
+
+cmd_stop() {
+	if is_loaded; then
+		launchctl bootout "$DOMAIN/$PLIST_NAME" 2>/dev/null || true
+		echo "Navi stopped."
+	else
+		echo "Not running."
+	fi
+}
+
+cmd_restart() {
+	cmd_stop
+	sleep 1
+	cmd_start
+}
+
+cmd_status() {
+	if is_loaded; then
+		local pid
+		pid=$(launchctl print "$DOMAIN/$PLIST_NAME" 2>/dev/null | grep -m1 'pid =' | awk '{print $3}')
+		if [[ -n "$pid" && "$pid" != "0" ]]; then
+			echo "Navi is running (pid $pid)"
+		else
+			echo "Navi is loaded but not currently running (will restart)"
+		fi
+	else
+		echo "Navi is not running."
+	fi
+}
+
+cmd_log() {
+	if [[ ! -f "$STDOUT_LOG" ]]; then
+		echo "No log file yet. Is Navi installed?"
+		exit 1
+	fi
+	tail -f "$STDOUT_LOG"
+}
+
+cmd_rebuild() {
+	echo "Building..."
+	(cd "$PROJECT_DIR" && npm run build)
+	echo "Build complete."
+	if is_loaded; then
+		echo "Restarting..."
+		cmd_stop
+		sleep 1
+		cmd_start
+	fi
+}
+
+case "${1:-help}" in
+	install)   cmd_install ;;
+	uninstall) cmd_uninstall ;;
+	start)     cmd_start ;;
+	stop)      cmd_stop ;;
+	restart)   cmd_restart ;;
+	status)    cmd_status ;;
+	log)       cmd_log ;;
+	rebuild)   cmd_rebuild ;;
+	help|*)
+		echo "Usage: navi <command>"
+		echo ""
+		echo "  install    Build and install as launchd service"
+		echo "  uninstall  Stop and remove the service"
+		echo "  start      Start the service"
+		echo "  stop       Stop the service"
+		echo "  restart    Restart the service"
+		echo "  rebuild    Build and restart if running"
+		echo "  status     Show if Navi is running"
+		echo "  log        Tail the live log"
+		;;
+esac

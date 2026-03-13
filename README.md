@@ -21,11 +21,34 @@ npm install
 # Log in to an AI provider (interactive CLI flow)
 npm run login
 
-# Start the assistant
+# Start in dev mode (with file watching)
 npm run dev
 ```
 
 On first run you'll see a QR code in your terminal. Scan it with WhatsApp (Settings → Linked Devices → Link a Device).
+
+## Running as a service
+
+Install Navi as a macOS launchd service so it runs in the background and auto-starts on login:
+
+```bash
+# Build, install service, and link `navi` CLI to PATH
+bin/navi install
+
+# After install, use from anywhere:
+navi status     # Check if running
+navi log        # Tail the live log
+navi stop       # Stop the service
+navi start      # Start the service
+navi restart    # Restart the service
+navi rebuild    # Rebuild and restart
+navi uninstall  # Stop, remove service and CLI link
+```
+
+`navi install` does three things:
+1. Builds the project (`npm run build`)
+2. Symlinks `navi` to `/usr/local/bin/` so it works from anywhere
+3. Registers a launchd service that auto-restarts on crash and starts on login
 
 ## Configuration
 

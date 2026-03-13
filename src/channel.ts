@@ -85,9 +85,15 @@ export async function handleMessage(
 
 	// ── Send to agent and reply ────────────────────────
 	await ctx.setTyping();
+	const typingInterval = setInterval(() => ctx.setTyping().catch(() => {}), 20_000);
 
 	const start = Date.now();
-	let response = await chat(contactId, text, images, contactName);
+	let response: string;
+	try {
+		response = await chat(contactId, text, images, contactName);
+	} finally {
+		clearInterval(typingInterval);
+	}
 	const duration = ((Date.now() - start) / 1000).toFixed(1);
 
 	// Extract reaction if present (e.g. "[react:👍]")
