@@ -179,16 +179,26 @@ export interface ChatPaths {
 	soul: string;
 }
 
+const DOMAIN_TO_PREFIX: Record<string, string> = {
+	"g.us": "g",
+	"s.whatsapp.net": "s",
+	lid: "l",
+};
+
+const PREFIX_TO_DOMAIN: Record<string, string> = Object.fromEntries(
+	Object.entries(DOMAIN_TO_PREFIX).map(([d, p]) => [p, d]),
+);
+
 function getChatDirName(contactId: string): string {
 	const [local, domain] = contactId.split("@");
-	const prefix = domain === "g.us" ? "g" : "s";
+	const prefix = DOMAIN_TO_PREFIX[domain] ?? "s";
 	return `${prefix}_${local}`;
 }
 
 export function contactIdFromDirName(dirName: string): string {
 	const prefix = dirName.charAt(0);
 	const local = dirName.slice(2);
-	const domain = prefix === "g" ? "g.us" : "s.whatsapp.net";
+	const domain = PREFIX_TO_DOMAIN[prefix] ?? "s.whatsapp.net";
 	return `${local}@${domain}`;
 }
 
