@@ -5,7 +5,7 @@ Personal AI assistant that lives in your WhatsApp. Powered by [Pi's coding agent
 ## Quick start
 
 ```bash
-git clone https://github.com/Naviverse/navi.git && cd navi
+git clone https://github.com/navi-verse/navi.git && cd navi
 npm install
 npm run login        # authenticate with an AI provider
 npm start            # start — scan QR code with WhatsApp
