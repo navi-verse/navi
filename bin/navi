@@ -14,6 +14,7 @@ DOMAIN="gui/$(id -u)"
 
 generate_plist() {
 	mkdir -p "$(dirname "$PLIST_PATH")"
+	local tsx_bin="$PROJECT_DIR/node_modules/.bin/tsx"
 	cat > "$PLIST_PATH" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -23,8 +24,8 @@ generate_plist() {
 	<string>$PLIST_NAME</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>$(which node)</string>
-		<string>$PROJECT_DIR/dist/index.js</string>
+		<string>$tsx_bin</string>
+		<string>$PROJECT_DIR/src/index.ts</string>
 	</array>
 	<key>WorkingDirectory</key>
 	<string>$PROJECT_DIR</string>
@@ -74,8 +75,8 @@ link_cli() {
 }
 
 cmd_install() {
-	echo "Building..."
-	(cd "$PROJECT_DIR" && npm run build)
+	echo "Type-checking..."
+	(cd "$PROJECT_DIR" && npx tsc --noEmit)
 	generate_plist
 	link_cli
 	if is_loaded; then
@@ -153,9 +154,9 @@ cmd_log() {
 }
 
 cmd_rebuild() {
-	echo "Building..."
-	(cd "$PROJECT_DIR" && npm run build)
-	echo "Build complete."
+	echo "Type-checking..."
+	(cd "$PROJECT_DIR" && npx tsc --noEmit)
+	echo "OK."
 	if is_loaded; then
 		echo "Restarting..."
 		cmd_stop
