@@ -1,107 +1,90 @@
 # Navi
 
-A personal assistant powered by [Pi's coding agent SDK](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent).
+Personal AI assistant that lives in your WhatsApp. Powered by [Pi's coding agent SDK](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent).
 
-Messages you send on WhatsApp are routed to a Navi agent session that has shell access, a shared brain for long-term knowledge, and Pi's extensibility (skills, extensions, prompt templates).
-
-## Prerequisites
-
-- Node.js 18+
-- A WhatsApp account (you'll scan a QR code to link)
-- An LLM provider account
-
-## Setup
+## Quick start
 
 ```bash
-# Clone and install
-git clone <your-repo>
-cd navi
+git clone https://github.com/Naviverse/navi.git && cd navi
 npm install
-
-# Log in to an AI provider (interactive CLI flow)
-npm run login
-
-# Start in dev mode (with file watching)
-npm run dev
+npm run login        # authenticate with an AI provider
+npm run dev          # start — scan QR code with WhatsApp
 ```
 
-On first run you'll see a QR code in your terminal. Scan it with WhatsApp (Settings → Linked Devices → Link a Device).
+On first launch, scan the QR code with **WhatsApp > Linked Devices > Link a Device**.
 
-## Running as a service
+## Configure
 
-Install Navi as a macOS launchd service so it runs in the background and auto-starts on login:
-
-```bash
-# Build, install service, and link `navi` CLI to PATH
-bin/navi install
-
-# After install, use from anywhere:
-navi status     # Check if running
-navi log        # Tail the live log
-navi stop       # Stop the service
-navi start      # Start the service
-navi restart    # Restart the service
-navi rebuild    # Rebuild and restart
-navi uninstall  # Stop, remove service and CLI link
-```
-
-`navi install` does three things:
-1. Builds the project (`npm run build`)
-2. Symlinks `navi` to `/usr/local/bin/` so it works from anywhere
-3. Registers a launchd service that auto-restarts on crash and starts on login
-
-## Configuration
-
-Settings live in `~/.navi/settings.json` (created on first run):
+`~/.navi/settings.json` is created on first run. Add your WhatsApp JID to allow messages:
 
 ```jsonc
 {
-  "allowedJids": ["19995551234@s.whatsapp.net"], // country code + number
-  "model": "anthropic/claude-sonnet-4-6",  // provider/model, auto-picked if unset
-  "thinkingLevel": "medium",             // off | minimal | low | medium | high | xhigh
-  "steeringMode": "all",                 // all | one-at-a-time
-  "followUpMode": "all"                  // all | one-at-a-time
+  "allowedJids": ["19995551234@s.whatsapp.net"],  // country code + number
+  "model": "anthropic/claude-sonnet-4-6"           // provider/model
 }
 ```
 
-## Commands
+Don't know your JID? Send a message — Navi logs the sender ID to the console.
 
-Send these in WhatsApp:
+## Run as a service
 
-| Command | What it does                    |
-| ------- | ------------------------------- |
-| /stop   | Stop the current response       |
-| /status | Show model & provider info      |
-| /reset  | Clear conversation, start fresh |
-| /help   | Show available commands         |
+Install as a macOS launchd service (auto-starts on login, auto-restarts on crash):
 
-## Architecture
-
-```
-Transport (whatsapp.ts)  →  Channel (channel.ts)  →  Agent (agent.ts)
-creates ChannelContext       commands + routing        Pi SDK sessions
+```bash
+bin/navi install      # build + register service + symlink CLI
 ```
 
-Each WhatsApp contact gets their own Navi session with separate history and context. Knowledge is shared across all conversations via the brain directory.
+Then from anywhere:
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.
+```bash
+navi status           # check if running
+navi log              # tail live output
+navi restart          # restart the service
+navi rebuild          # rebuild and restart
+navi uninstall        # remove service and CLI link
+```
 
-## Security notes
+## WhatsApp commands
 
-- **The agent has shell access** on the host machine. Run this in a container or VM if you don't fully trust the people messaging it.
-- **Use `allowedJids`** to restrict access to your own number.
+| Command   | Description                     |
+|-----------|---------------------------------|
+| `/stop`   | Abort the current response      |
+| `/reset`  | Clear conversation, start fresh |
+| `/status` | Show model and context info     |
+| `/help`   | List available commands         |
 
-## Data storage
+## Security
+
+- **The agent has shell access** on the host. Run in a container/VM if you don't fully trust the people messaging it.
+- **Use `allowedJids`** to restrict who can talk to Navi.
+
+## Data
 
 ```
 ~/.navi/
-  settings.json         # User config
+  settings.json         # Config
   SOUL.md               # Personality (editable)
   AGENTS.md             # Agent instructions (editable)
-  brain/                # Shared knowledge (GLOBAL.md + agent-created files)
-  workspace/            # Per-contact sessions, history, routines, jobs
-  whatsapp-auth/        # WhatsApp session credentials (keep private!)
+  brain/                # Shared knowledge (GLOBAL.md + per-topic)
+  workspace/            # Per-contact sessions, history, jobs
+  whatsapp-auth/        # WhatsApp credentials (keep private!)
 ```
+
+## Development
+
+```bash
+npm run dev           # run with hot reload (tsx --watch)
+npm run check         # type-check + format
+npm run login         # add/change provider credentials
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for internals.
+
+## Requirements
+
+- Node.js 20+
+- An AI provider account (Anthropic, GitHub Copilot, Google, etc.)
+- A WhatsApp account to link
 
 ## License
 
