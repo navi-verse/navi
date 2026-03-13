@@ -1,7 +1,9 @@
 // whatsapp.ts — Baileys WhatsApp transport
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
+import type { ToolDefinition } from "@mariozechner/pi-coding-agent";
+import { type Static, Type } from "@sinclair/typebox";
 import makeWASocket, {
 	Browsers,
 	DisconnectReason,
@@ -201,33 +203,65 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 	return { text: fullText, images };
 }
 
-export async function sendOutboxFiles(sock: WASocket, jid: string, outboxDir: string): Promise<void> {
-	if (!existsSync(outboxDir)) return;
+// ── send_media tool ──────────────────────────────────
 
-	const files = readdirSync(outboxDir);
-	for (const file of files) {
-		const filePath = join(outboxDir, file);
-		try {
-			const buffer = readFileSync(filePath);
-			const ext = extname(file).toLowerCase();
-			const mime = mimeForExt(file);
+const sendMediaParams = Type.Object({
+	path: Type.String({ description: "Absolute path to the file to send" }),
+	caption: Type.Optional(Type.String({ description: "Caption for images/videos/documents" })),
+	voiceNote: Type.Optional(Type.Boolean({ description: "Send audio as a voice note (default: true for .ogg)" })),
+});
 
-			if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
-				await sock.sendMessage(jid, { image: buffer });
-			} else if ([".mp4", ".mkv", ".avi"].includes(ext)) {
-				await sock.sendMessage(jid, { video: buffer });
-			} else if ([".ogg", ".mp3", ".m4a", ".wav"].includes(ext)) {
-				await sock.sendMessage(jid, { audio: buffer, mimetype: mime });
-			} else {
-				await sock.sendMessage(jid, { document: buffer, mimetype: mime, fileName: file });
+type SendMediaParams = Static<typeof sendMediaParams>;
+
+function textResult(text: string) {
+	return { content: [{ type: "text" as const, text }], details: {} };
+}
+
+export function createSendMediaTool(contactId: string): ToolDefinition {
+	return {
+		name: "send_media",
+		label: "Send Media",
+		description:
+			"Send a file (image, video, audio, document) to the current chat. Supports jpg/png/webp/gif, mp4, ogg/mp3/m4a/wav, pdf, and more.",
+		promptSnippet: "send_media — send a file (image, audio, video, document) to the chat",
+		parameters: sendMediaParams,
+		async execute(_toolCallId, params: SendMediaParams) {
+			const sock = getSocket();
+			if (!sock) return textResult("Error: WhatsApp not connected");
+
+			const filePath = params.path;
+			if (!existsSync(filePath)) return textResult(`Error: File not found: ${filePath}`);
+
+			try {
+				const buffer = readFileSync(filePath);
+				const ext = extname(filePath).toLowerCase();
+				const mime = mimeForExt(filePath);
+
+				if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
+					await sock.sendMessage(contactId, { image: buffer, caption: params.caption });
+				} else if ([".mp4", ".mkv", ".avi"].includes(ext)) {
+					await sock.sendMessage(contactId, { video: buffer, caption: params.caption });
+				} else if ([".ogg", ".mp3", ".m4a", ".wav"].includes(ext)) {
+					const ptt = params.voiceNote ?? ext === ".ogg";
+					await sock.sendMessage(contactId, { audio: buffer, mimetype: mime, ptt });
+				} else {
+					await sock.sendMessage(contactId, {
+						document: buffer,
+						mimetype: mime,
+						fileName: basename(filePath),
+						caption: params.caption,
+					});
+				}
+
+				log(`📤 ${contactId}: sent ${basename(filePath)}`);
+				return textResult(`Sent: ${basename(filePath)}`);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				logError(`📤 ${contactId}: send_media error`, err);
+				return textResult(`Error sending file: ${msg}`);
 			}
-
-			unlinkSync(filePath);
-			log(`📤 outbox: ${file}`);
-		} catch (err) {
-			logError(`📤 outbox error ${file}:`, err);
-		}
-	}
+		},
+	};
 }
 
 export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASocket> {
@@ -350,7 +384,6 @@ export async function connectWhatsApp(onMessage: MessageHandler): Promise<WASock
 			try {
 				const promptText = messageText || (images.length ? "What is this?" : "");
 				await onMessage(jid, promptText, ctx, images.length ? images : undefined, msg.pushName || undefined);
-				await sendOutboxFiles(sock, jid, chatPaths.outbox);
 			} catch (err) {
 				logError(`❌ ${jid}: message handler error`, { contactId: jid, err: String(err) });
 				await ctx.respond("⚠️ Something went wrong processing your message. Try again.");

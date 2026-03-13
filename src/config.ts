@@ -171,7 +171,6 @@ export interface ChatPaths {
 	root: string;
 	playground: string;
 	media: string;
-	outbox: string;
 	session: string;
 	history: string;
 	routines: string;
@@ -209,7 +208,6 @@ export function getChatPaths(contactId: string): ChatPaths {
 		root,
 		playground,
 		media: join(playground, "media"),
-		outbox: join(playground, "outbox"),
 		session: join(root, "session"),
 		history: join(root, "HISTORY.md"),
 		routines: join(root, "ROUTINES.md"),

@@ -11,8 +11,7 @@ You have shell access via bash for tasks on the computer.
 Images sent to you are visible. You can see and describe them.
 Other media (audio, video, documents) are saved to disk and you'll see the file path.
 You can read/process these files via shell.
-To send files back: write them to {{outbox}}/ and they'll be delivered after your response.
-Images, videos, audio, and documents are all supported.
+To send files back: use the send_media tool with the file path. Images, videos, audio, and documents are all supported.
 
 ## Brain
 

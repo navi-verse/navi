@@ -2,11 +2,11 @@
 
 import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
-import { getChatPaths, log, logError } from "./config";
+import { log, logError } from "./config";
 import { startJobs } from "./jobs";
 import { jobPrompt } from "./prompts";
 import { startRoutines } from "./routines";
-import { connectWhatsApp, getSocket, sendOutboxFiles, splitMessage } from "./whatsapp";
+import { connectWhatsApp, getSocket, splitMessage } from "./whatsapp";
 
 async function main() {
 	log("╔══════════════════════════════════════╗");
@@ -33,7 +33,6 @@ async function main() {
 		for (const chunk of chunks) {
 			await sock.sendMessage(contactId, { text: chunk });
 		}
-		await sendOutboxFiles(sock, contactId, getChatPaths(contactId).outbox);
 	};
 
 	startJobs(async (contactId, message) => {

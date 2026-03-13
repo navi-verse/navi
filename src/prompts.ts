@@ -8,7 +8,6 @@ interface BuildSystemPromptOptions {
 	contactId: string;
 	contactName: string;
 	playground: string;
-	outbox: string;
 	brainDir: string;
 	history: string;
 	routines: string;
@@ -20,7 +19,6 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		.replace(/\{\{contactId\}\}/g, opts.contactId)
 		.replace(/\{\{contactName\}\}/g, opts.contactName)
 		.replace(/\{\{playground\}\}/g, opts.playground)
-		.replace(/\{\{outbox\}\}/g, opts.outbox)
 		.replace(/\{\{brainDir\}\}/g, opts.brainDir)
 		.replace(/\{\{history\}\}/g, opts.history)
 		.replace(/\{\{routines\}\}/g, opts.routines);

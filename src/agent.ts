@@ -21,6 +21,7 @@ import { createJobTool } from "./jobs";
 import { buildSystemPrompt } from "./prompts";
 import { initRoutines } from "./routines";
 import { webFetchTool, webSearchTool } from "./web";
+import { createSendMediaTool } from "./whatsapp";
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -71,7 +72,6 @@ async function getSession(contactId: string, contactName = "") {
 	// Ensure all per-contact dirs exist
 	mkdirSync(paths.playground, { recursive: true });
 	mkdirSync(paths.media, { recursive: true });
-	mkdirSync(paths.outbox, { recursive: true });
 	mkdirSync(paths.session, { recursive: true });
 
 	initHistory(paths.history);
@@ -106,7 +106,6 @@ async function getSession(contactId: string, contactName = "") {
 		contactId,
 		contactName,
 		playground: paths.playground,
-		outbox: paths.outbox,
 		brainDir,
 		history: paths.history,
 		routines: paths.routines,
@@ -128,7 +127,7 @@ async function getSession(contactId: string, contactName = "") {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(paths.playground, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
-		customTools: [createJobTool(contactId, paths.jobs), webSearchTool, webFetchTool],
+		customTools: [createJobTool(contactId, paths.jobs), createSendMediaTool(contactId), webSearchTool, webFetchTool],
 	});
 
 	sessions.set(contactId, result);
