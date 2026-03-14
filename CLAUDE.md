@@ -66,6 +66,12 @@ npm run login   — Log in to an AI provider
 - Claude Code hooks auto-format `.ts` files on Write/Edit
 - Pre-commit hook runs `npm run ci` before any git commit
 
+## Git workflow
+
+- **`dev` is the working branch** — all development happens on `dev`, never commit directly to `main`
+- **`main` is for releases only** — merge `dev` → `main` when ready to release
+- **Tag releases** on `main` with `v*` (e.g. `v0.2.0`) — triggers GitHub Release workflow
+
 ## Workflow preferences
 
 - **KISS & YAGNI** — minimal code for current requirements, no speculative abstractions
