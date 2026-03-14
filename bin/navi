@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Resolve the project root (where this script lives: <project>/bin/navi)
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve the project root (follow symlinks: /usr/local/bin/navi → <project>/bin/navi)
+SCRIPT="$0"
+if [[ -L "$SCRIPT" ]]; then
+	SCRIPT="$(readlink "$SCRIPT")"
+fi
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 NAVI_HOME="$HOME/.navi"
