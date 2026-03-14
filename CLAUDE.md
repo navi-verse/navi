@@ -82,3 +82,4 @@ npm run login   — Log in to an AI provider
 - **Ask before over-engineering** — don't add features, refactors, or abstractions beyond what's requested
 - **Big changes: plan → implement → review → commit** — use `/plan` for non-trivial work, implement, self-review for bugs/edge cases, then ask to commit
 - **Always ask to commit** — after completing a meaningful change, ask if the user wants to commit
+- **NEVER commit personal data** — no code, skills, configs, or any file may contain personal information (home addresses, coordinates, room layouts, folder/list names, credentials, API keys, tokens, hostnames, IP addresses). Use generic examples and discovery commands instead. Review all changes before committing.

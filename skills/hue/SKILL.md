@@ -20,23 +20,9 @@ openhue configure
 
 Uses `openhue` CLI at `/opt/homebrew/bin/openhue`.
 
-## Rooms
-Living room, Bedroom, Office, Kitchen, Gym, Entrance, Hallway, Staircase, Dining
+## Discovery
 
-## Lights
-| Name | Type | Room |
-|---|---|---|
-| Gym Light | ceiling_round | Gym |
-| Bedroom Light | ceiling_round | Bedroom |
-| TV | hue_lightstrip | Living room |
-| Ceiling | ceiling_round | Living room |
-| Couch 1/2/3 | spot_bulb | Living room |
-| Left / Right | ceiling_round | Office |
-| Entrance 1/2 | spot_bulb | Entrance |
-| Hallway 1-4 | spot_bulb | Hallway |
-| Kitchen Light | ceiling_round | Kitchen |
-| Staircase Ceiling + 1-6 | pendant/spot | Staircase |
-| Dining 1-4 | up_and_down | Dining |
+Run `openhue get rooms` and `openhue get lights` to discover the user's setup.
 
 ## Commands
 

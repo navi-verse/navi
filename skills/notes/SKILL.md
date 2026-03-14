@@ -8,10 +8,11 @@ description: Create, read, and search Apple Notes. Use when the user asks to add
 Uses `osascript` (AppleScript) to interact with Apple Notes on macOS.
 A native Swift CLI is planned (tracked in Backlog).
 
-## Folders available
-- 🏠 Family
-- 🥘 Recipies (13 recipes saved)
-- Notes (default)
+## Discovery
+
+```bash
+osascript -e 'tell application "Notes" to get name of every folder'
+```
 
 ## Create a new note
 
@@ -24,7 +25,7 @@ end tell'
 In a specific folder:
 ```bash
 osascript -e 'tell application "Notes"
-  make new note in folder "🏠 Family" with properties {name: "Title", body: "Content"}
+  make new note in folder "My Folder" with properties {name: "Title", body: "Content"}
 end tell'
 ```
 
@@ -32,7 +33,7 @@ end tell'
 
 ```bash
 osascript -e 'tell application "Notes"
-  set n to first note in folder "🏠 Family" whose name is "Shopping ideas"
+  set n to first note in folder "My Folder" whose name is "My Note"
   set body of n to (body of n) & "\nNew line added"
 end tell'
 ```
@@ -48,7 +49,7 @@ end tell'
 ## List notes in a folder
 
 ```bash
-osascript -e 'tell application "Notes" to get name of every note in folder "🏠 Family"'
+osascript -e 'tell application "Notes" to get name of every note in folder "My Folder"'
 ```
 
 ## Search notes
@@ -59,5 +60,5 @@ osascript -e 'tell application "Notes" to get name of every note whose name cont
 
 ## Notes
 - Notes body returns HTML — strip tags if needed
-- Folder names are emoji-prefixed, include emoji in the string
+- Folder names may include emoji — include emoji in the string if present
 - Default account is iCloud

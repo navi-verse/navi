@@ -17,12 +17,11 @@ remindctl --version
 
 Uses `remindctl` CLI at `/opt/homebrew/bin/remindctl`.
 
-## Lists available
-- Shopping (main grocery list, iCloud shared)
-- Family
-- Activities
-- Reminders (default)
-- Backlog
+## Discovery
+
+```bash
+remindctl list                    # show all lists
+```
 
 ## Add a reminder
 
@@ -54,5 +53,4 @@ remindctl delete "Buy milk"
 
 ## Notes
 - Default list: Reminders
-- Shopping list is the shared grocery list
 - Use `--due` for time-sensitive reminders

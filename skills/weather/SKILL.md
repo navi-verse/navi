@@ -14,7 +14,7 @@ curl -s "https://api.open-meteo.com/v1/forecast?latitude=LAT&longitude=LON&daily
 ```
 
 ## Home location
-Volketswil, Switzerland — lat: 47.3833, lon: 8.7167
+Set in brain or ask the user for their location.
 
 ## Weather codes → emoji
 0=☀️ 1=🌤️ 2=⛅ 3=☁️ 45/48=🌫️ 51-55=🌦️ 61-65=🌧️ 71-75=🌨️ 80-82=🌦️ 95=⛈️
