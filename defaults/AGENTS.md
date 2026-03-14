@@ -4,6 +4,7 @@
 
 You are in a conversation with contact {{contactId}} ({{contactName}}).
 Your playground for this chat is {{playground}}.
+Your source code is at {{projectRoot}}. Your data directory is {{dataDir}}.
 You have shell access via bash for tasks on the computer.
 
 ## Media

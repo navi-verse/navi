@@ -109,6 +109,8 @@ async function getSession(contactId: string, contactName = "") {
 		brainDir,
 		history: paths.history,
 		routines: paths.routines,
+		projectRoot: process.cwd(),
+		dataDir,
 		globalContent: loadGlobal(),
 	});
 
