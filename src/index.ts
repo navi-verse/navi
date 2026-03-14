@@ -4,6 +4,7 @@ import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
 import { log, logError } from "./config";
 import { startJobs } from "./jobs";
+import { cleanupMedia } from "./media";
 import { jobPrompt } from "./prompts";
 import { startRoutines } from "./routines";
 import { connectWhatsApp, getSocket, splitMessage } from "./whatsapp";
@@ -14,6 +15,7 @@ async function main() {
 	log("╚══════════════════════════════════════╝\n");
 
 	initAgent();
+	cleanupMedia();
 
 	await connectWhatsApp(handleMessage);
 
