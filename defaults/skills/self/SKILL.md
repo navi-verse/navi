@@ -44,12 +44,13 @@ Key files outside `src/`:
 2. **Make changes** using shell
 3. **Type-check**: `npx tsc --noEmit` from the project root
 4. **Run tests**: `npx vitest run` from the project root
-5. **Apply changes**: `navi rebuild` (builds + restarts the service)
+5. **Apply changes**: `navi restart` (restarts the service, picks up code changes)
 
 ### Important
 
-- You're running as a launchd service. After code changes, run `navi rebuild` to apply them.
-- Don't break yourself — always type-check before rebuilding.
+- You're running as a launchd service. After code changes, run `navi restart` to apply them.
+- To pull the latest version from GitHub: `navi update` (pulls, installs deps, type-checks, restarts)
+- Don't break yourself — always type-check before restarting.
 - The project uses Biome for formatting (tabs, double quotes, semicolons, 120 line width). Run `npx biome check --write src/` after edits.
 - If you break something and can't recover, the user can fix it manually from the project directory.
 
@@ -62,7 +63,8 @@ cat src/config.ts          # read a file
 npx tsc --noEmit           # type-check
 npx vitest run             # run tests
 npm run check              # type-check + format
-navi rebuild               # build + restart service
+navi restart               # restart service
+navi update                # pull + install deps + restart
 navi log                   # check your own logs
 navi status                # check if you're running
 ```
@@ -73,7 +75,7 @@ navi status                # check if you're running
 - **Agent instruction changes** → edit `dataDir/AGENTS.md`
 - **Adding capabilities** → create a skill in `dataDir/skills/`
 - **Settings** → edit `dataDir/settings.json`
-- **Code changes** → edit files in `src/`, then `navi rebuild`
+- **Code changes** → edit files in `src/`, then `navi restart`
 
 Prefer config/skill changes over code changes when possible. Code changes are more powerful but riskier.
 

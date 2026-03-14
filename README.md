@@ -42,7 +42,7 @@ Then from anywhere:
 navi status           # check if running
 navi log              # tail live output
 navi restart          # restart the service
-navi rebuild          # rebuild and restart
+navi update           # pull latest, install deps, restart
 navi uninstall        # remove service and CLI link
 ```
 

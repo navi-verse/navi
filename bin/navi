@@ -75,8 +75,6 @@ link_cli() {
 }
 
 cmd_install() {
-	echo "Type-checking..."
-	(cd "$PROJECT_DIR" && npx tsc --noEmit)
 	generate_plist
 	link_cli
 	if is_loaded; then
@@ -153,9 +151,13 @@ cmd_log() {
 	tail -f "$STDOUT_LOG"
 }
 
-cmd_rebuild() {
+cmd_update() {
+	echo "Pulling latest..."
+	(cd "$PROJECT_DIR" && git pull)
+	echo "Installing dependencies..."
+	(cd "$PROJECT_DIR" && npm install)
 	echo "Type-checking..."
-	(cd "$PROJECT_DIR" && npx tsc --noEmit)
+	(cd "$PROJECT_DIR" && "$PROJECT_DIR/node_modules/.bin/tsc" --noEmit)
 	echo "OK."
 	if is_loaded; then
 		echo "Restarting..."
@@ -173,7 +175,7 @@ case "${1:-help}" in
 	restart)   cmd_restart ;;
 	status)    cmd_status ;;
 	log)       cmd_log ;;
-	rebuild)   cmd_rebuild ;;
+	update)    cmd_update ;;
 	help|*)
 		echo "Usage: navi <command>"
 		echo ""
@@ -182,7 +184,7 @@ case "${1:-help}" in
 		echo "  start      Start the service"
 		echo "  stop       Stop the service"
 		echo "  restart    Restart the service"
-		echo "  rebuild    Build and restart if running"
+		echo "  update     Pull latest, install deps, and restart"
 		echo "  status     Show if Navi is running"
 		echo "  log        Tail the live log"
 		;;
