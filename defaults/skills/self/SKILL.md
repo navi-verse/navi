@@ -36,52 +36,76 @@ Key files outside `src/`:
 - `dataDir/AGENTS.md` — Active agent instructions (user-editable)
 - `dataDir/settings.json` — Runtime config
 
-## Making changes
+## Modifying behavior vs. modifying code
 
-### Workflow
+- **Personality/style changes** → edit `dataDir/SOUL.md` (live, no restart needed)
+- **Agent instruction changes** → edit `dataDir/AGENTS.md` (live, no restart needed)
+- **Adding capabilities** → create a skill in `dataDir/skills/`, then use the `reload` tool
+- **Settings** → edit `dataDir/settings.json`
+- **Code changes** → use the safe workflow below
 
-1. **Read the relevant files** before editing — understand existing code
-2. **Make changes** using shell
-3. **Type-check**: `npx tsc --noEmit` from the project root
-4. **Run tests**: `npx vitest run` from the project root
-5. **Apply changes**: `navi restart` (restarts the service, picks up code changes)
+Prefer config/skill changes over code changes when possible.
+
+## Code changes — safe workflow
+
+Never edit live code in `$PROJECT_ROOT`. Instead, clone into the playground and submit a PR:
+
+### 1. Clone (once per session)
+
+```bash
+cd "$PLAYGROUND"
+if [ ! -d navi ]; then
+  git clone "$PROJECT_ROOT" navi
+fi
+cd navi
+git checkout main && git pull origin main
+```
+
+### 2. Branch
+
+```bash
+git checkout -b feature/short-description
+```
+
+### 3. Edit, format, type-check
+
+```bash
+# make changes...
+npx biome check --write src/
+npx tsc --noEmit
+npx vitest run
+```
+
+### 4. Commit and push
+
+```bash
+git add -A
+git commit -m "Description of change"
+git push origin feature/short-description
+```
+
+### 5. Create a PR
+
+```bash
+gh pr create --title "Short title" --body "What and why"
+```
+
+Share the PR link with the user. They can review, merge, and run `navi update` to apply.
 
 ### Important
 
-- You're running as a launchd service. After code changes, run `navi restart` to apply them.
-- To pull the latest version from GitHub: `navi update` (pulls, installs deps, type-checks, restarts)
-- Don't break yourself — always type-check before restarting.
-- The project uses Biome for formatting (tabs, double quotes, semicolons, 120 line width). Run `npx biome check --write src/` after edits.
-- If you break something and can't recover, the user can fix it manually from the project directory.
+- Never edit files directly in `$PROJECT_ROOT` — always use the playground clone
+- The project uses Biome for formatting (tabs, double quotes, semicolons, 120 line width)
+- Always type-check before committing
+- If unsure about a change, describe it to the user first
 
-### Quick reference
+## CLI commands
 
 ```bash
-cd "$PROJECT_ROOT"
-
-cat src/config.ts          # read a file
-npx tsc --noEmit           # type-check
-npx vitest run             # run tests
-npm run check              # type-check + format
+navi status                # check if running
 navi restart               # restart service
-navi update                # pull + install deps + restart
+navi update                # pull latest + install deps + restart
+navi doctor                # preflight health check
+navi version               # show current version
 navi log                   # check your own logs
-navi status                # check if you're running
 ```
-
-### Modifying behavior vs. modifying code
-
-- **Personality/style changes** → edit `dataDir/SOUL.md`
-- **Agent instruction changes** → edit `dataDir/AGENTS.md`
-- **Adding capabilities** → create a skill in `dataDir/skills/`
-- **Settings** → edit `dataDir/settings.json`
-- **Code changes** → edit files in `src/`, then `navi restart`
-
-Prefer config/skill changes over code changes when possible. Code changes are more powerful but riskier.
-
-## Git workflow
-
-The project uses git. When making code changes:
-- All development happens on `main`
-- Commit meaningful changes with descriptive messages
-- The user may want to review changes before committing
