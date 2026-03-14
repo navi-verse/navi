@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Create new skills or update existing skills in ~/.navi/skills/ following the agentskills.io specification. Use when the user asks to create a skill, add a new capability, make a reusable workflow, or turn the current conversation into a skill. Also use when updating or improving an existing skill.
+description: Create new skills or update existing skills following the agentskills.io specification. Use when the user asks to create a skill, add a new capability, make a reusable workflow, or turn the current conversation into a skill. Also use when updating or improving an existing skill.
 ---
 
 # Skill Creator
@@ -34,7 +34,7 @@ Before writing, analyze what should be bundled:
 #### Directory structure
 
 ```
-~/.navi/skills/<skill-name>/
+{{dataDir}}/skills/<skill-name>/
 ├── SKILL.md          # Required: metadata + instructions
 ├── scripts/          # Optional: executable code
 ├── references/       # Optional: documentation

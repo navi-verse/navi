@@ -5,7 +5,7 @@ const baseOpts: BuildSystemPromptOptions = {
 	soul: "You are Navi.",
 	soulSource: "/path/to/SOUL.md",
 	agents:
-		"Contact: {{contactId}}, Playground: {{playground}}, Brain: {{brainDir}}, History: {{history}}, Routines: {{routines}}, Name: {{contactName}}",
+		"Contact: {{contactId}}, Playground: {{playground}}, Brain: {{brainDir}}, History: {{history}}, Routines: {{routines}}, Name: {{contactName}}, Project: {{projectRoot}}, Data: {{dataDir}}",
 	agentsSource: "/path/to/AGENTS.md",
 	contactId: "123@s.whatsapp.net",
 	contactName: "Alice",
@@ -13,6 +13,8 @@ const baseOpts: BuildSystemPromptOptions = {
 	brainDir: "/home/navi/brain",
 	history: "/home/navi/HISTORY.md",
 	routines: "/home/navi/ROUTINES.md",
+	projectRoot: "/home/navi/project",
+	dataDir: "/home/navi/data",
 	globalContent: "",
 };
 
@@ -31,6 +33,8 @@ describe("buildSystemPrompt", () => {
 		expect(result).toContain("History: /home/navi/HISTORY.md");
 		expect(result).toContain("Routines: /home/navi/ROUTINES.md");
 		expect(result).toContain("Name: Alice");
+		expect(result).toContain("Project: /home/navi/project");
+		expect(result).toContain("Data: /home/navi/data");
 	});
 
 	it("includes global content when present", () => {

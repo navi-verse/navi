@@ -50,6 +50,8 @@ interface NaviSettings {
 	skills: string[];
 	streamingBehavior: "steer" | "followUp";
 	routineIntervalSeconds?: number;
+	mediaMaxSizeMb?: number;
+	mediaRetentionDays?: number;
 }
 
 // ── Load settings ────────────────────────────────────
