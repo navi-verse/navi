@@ -11,6 +11,8 @@ export interface BuildSystemPromptOptions {
 	brainDir: string;
 	history: string;
 	routines: string;
+	projectRoot: string;
+	dataDir: string;
 	globalContent: string;
 }
 
@@ -21,7 +23,9 @@ export function buildSystemPrompt(opts: BuildSystemPromptOptions): string {
 		.replace(/\{\{playground\}\}/g, opts.playground)
 		.replace(/\{\{brainDir\}\}/g, opts.brainDir)
 		.replace(/\{\{history\}\}/g, opts.history)
-		.replace(/\{\{routines\}\}/g, opts.routines);
+		.replace(/\{\{routines\}\}/g, opts.routines)
+		.replace(/\{\{projectRoot\}\}/g, opts.projectRoot)
+		.replace(/\{\{dataDir\}\}/g, opts.dataDir);
 
 	const lines = [`<!-- source: ${opts.soulSource} -->`, opts.soul, "", `<!-- source: ${opts.agentsSource} -->`, agents];
 

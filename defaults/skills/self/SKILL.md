@@ -7,20 +7,7 @@ description: Navi self-awareness — understand and modify your own source code,
 
 You are Navi, and your source code is a TypeScript project. You can read, understand, and modify your own code.
 
-## Finding your source
-
-Your source code is at the project root where `bin/navi` was installed from. To find it:
-
-```bash
-# Follow the symlink to find your project root
-readlink -f "$(which navi)" | xargs dirname | xargs dirname
-```
-
-Or check directly — you're typically installed at the path stored in your launchd plist:
-
-```bash
-grep -A1 ProgramArguments ~/Library/LaunchAgents/com.navi.agent.plist | grep -o '/.*/' | head -1 | sed 's|/node_modules/.*||'
-```
+Your source code path and data directory are in your system prompt (projectRoot and dataDir).
 
 ## Architecture
 
@@ -44,21 +31,20 @@ src/
 Key files outside `src/`:
 - `defaults/SOUL.md` — Default personality template
 - `defaults/AGENTS.md` — Default agent instructions template
-- `defaults/skills/` — Built-in skills (copied to ~/.navi/skills/ on first run)
-- `~/.navi/SOUL.md` — Active personality (user-editable)
-- `~/.navi/AGENTS.md` — Active agent instructions (user-editable)
-- `~/.navi/settings.json` — Runtime config
+- `defaults/skills/` — Built-in skills (copied to dataDir/skills/ on first run)
+- `dataDir/SOUL.md` — Active personality (user-editable)
+- `dataDir/AGENTS.md` — Active agent instructions (user-editable)
+- `dataDir/settings.json` — Runtime config
 
 ## Making changes
 
 ### Workflow
 
-1. **Find your project root** (see above)
-2. **Read the relevant files** before editing — understand existing code
-3. **Make changes** using shell (cat, sed, or write files directly)
-4. **Type-check**: `npx tsc --noEmit` from the project root
-5. **Run tests**: `npx vitest run` from the project root
-6. **Apply changes**: `navi rebuild` (builds + restarts the service)
+1. **Read the relevant files** before editing — understand existing code
+2. **Make changes** using shell
+3. **Type-check**: `npx tsc --noEmit` from the project root
+4. **Run tests**: `npx vitest run` from the project root
+5. **Apply changes**: `navi rebuild` (builds + restarts the service)
 
 ### Important
 
@@ -70,8 +56,7 @@ Key files outside `src/`:
 ### Quick reference
 
 ```bash
-PROJECT=$(readlink -f "$(which navi)" | xargs dirname | xargs dirname)
-cd "$PROJECT"
+cd "$PROJECT_ROOT"
 
 cat src/config.ts          # read a file
 npx tsc --noEmit           # type-check
@@ -84,10 +69,10 @@ navi status                # check if you're running
 
 ### Modifying behavior vs. modifying code
 
-- **Personality/style changes** → edit `~/.navi/SOUL.md`
-- **Agent instruction changes** → edit `~/.navi/AGENTS.md`
-- **Adding capabilities** → create a skill in `~/.navi/skills/`
-- **Settings** → edit `~/.navi/settings.json`
+- **Personality/style changes** → edit `dataDir/SOUL.md`
+- **Agent instruction changes** → edit `dataDir/AGENTS.md`
+- **Adding capabilities** → create a skill in `dataDir/skills/`
+- **Settings** → edit `dataDir/settings.json`
 - **Code changes** → edit files in `src/`, then `navi rebuild`
 
 Prefer config/skill changes over code changes when possible. Code changes are more powerful but riskier.
