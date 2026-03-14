@@ -171,6 +171,113 @@ cmd_update() {
 	fi
 }
 
+cmd_version() {
+	local tag commit desc
+	tag=$(cd "$PROJECT_DIR" && git describe --tags --abbrev=0 2>/dev/null || echo "untagged")
+	commit=$(cd "$PROJECT_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+	desc=$(cd "$PROJECT_DIR" && git describe --tags --long 2>/dev/null || echo "")
+	if [[ -n "$desc" && "$desc" == *-0-g* ]]; then
+		echo "Navi $tag ($commit)"
+	elif [[ -n "$desc" ]]; then
+		local ahead
+		ahead=$(echo "$desc" | sed 's/.*-\([0-9]*\)-g.*/\1/')
+		echo "Navi $tag+$ahead ($commit)"
+	else
+		echo "Navi $commit"
+	fi
+}
+
+cmd_doctor() {
+	local ok=true
+
+	# Version
+	cmd_version
+	echo ""
+
+	# Node
+	if command -v node &>/dev/null; then
+		echo "✅ node $(node --version)"
+	else
+		echo "❌ node not found"
+		ok=false
+	fi
+
+	# npm
+	if command -v npm &>/dev/null; then
+		echo "✅ npm $(npm --version)"
+	else
+		echo "❌ npm not found"
+		ok=false
+	fi
+
+	# node_modules
+	if [[ -d "$PROJECT_DIR/node_modules" ]]; then
+		echo "✅ node_modules installed"
+	else
+		echo "❌ node_modules missing — run: npm install"
+		ok=false
+	fi
+
+	# tsx
+	if [[ -x "$PROJECT_DIR/node_modules/.bin/tsx" ]]; then
+		echo "✅ tsx available"
+	else
+		echo "❌ tsx missing — run: npm install"
+		ok=false
+	fi
+
+	# Auth
+	if [[ -f "$NAVI_HOME/auth.json" ]]; then
+		# Check if any provider has credentials
+		local providers
+		providers=$(node -e "
+			const a = require('$NAVI_HOME/auth.json');
+			const p = Object.keys(a).filter(k => a[k]);
+			if (p.length) console.log(p.join(', '));
+		" 2>/dev/null || echo "")
+		if [[ -n "$providers" ]]; then
+			echo "✅ auth.json ($providers)"
+		else
+			echo "⚠️  auth.json exists but no providers logged in — run: npm run login"
+		fi
+	else
+		echo "❌ auth.json missing — run: npm run login"
+		ok=false
+	fi
+
+	# Model
+	if [[ -f "$NAVI_HOME/settings.json" ]]; then
+		local model
+		model=$(node -e "
+			const s = require('$NAVI_HOME/settings.json');
+			if (s.model) console.log(s.model);
+		" 2>/dev/null || echo "")
+		if [[ -n "$model" ]]; then
+			echo "✅ model: $model"
+		else
+			echo "⚠️  no model configured — will auto-select from logged-in provider"
+		fi
+	else
+		echo "⚠️  settings.json missing — will be created on first run"
+	fi
+
+	# Service
+	if is_loaded; then
+		echo "✅ service running"
+	elif [[ -f "$PLIST_PATH" ]]; then
+		echo "⚠️  service installed but not running"
+	else
+		echo "⚠️  service not installed — run: navi install"
+	fi
+
+	echo ""
+	if $ok; then
+		echo "All good."
+	else
+		echo "Fix the issues above before running Navi."
+	fi
+}
+
 case "${1:-help}" in
 	install)   cmd_install ;;
 	uninstall) cmd_uninstall ;;
@@ -180,15 +287,19 @@ case "${1:-help}" in
 	status)    cmd_status ;;
 	log)       cmd_log ;;
 	update)    cmd_update ;;
+	doctor)    cmd_doctor ;;
+	version)   cmd_version ;;
 	help|*)
 		echo "Usage: navi <command>"
 		echo ""
-		echo "  install    Build and install as launchd service"
+		echo "  install    Install as launchd service"
 		echo "  uninstall  Stop and remove the service"
 		echo "  start      Start the service"
 		echo "  stop       Stop the service"
 		echo "  restart    Restart the service"
 		echo "  update     Pull latest, install deps, and restart"
+		echo "  doctor     Preflight check (deps, auth, model)"
+		echo "  version    Show current version"
 		echo "  status     Show if Navi is running"
 		echo "  log        Tail the live log"
 		;;
