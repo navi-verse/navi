@@ -94,8 +94,16 @@ interface ExtractedMedia {
 }
 
 async function extractMedia(msg: WAMessage, mediaDir: string): Promise<ExtractedMedia> {
-	const m = msg.message;
+	let m = msg.message;
 	if (!m) return { text: "", images: [] };
+
+	// View-once: unwrap inner message and process normally with a prefix
+	let viewOncePrefix = "";
+	const viewOnceInner = m.viewOnceMessage?.message || m.viewOnceMessageV2?.message;
+	if (viewOnceInner) {
+		viewOncePrefix = "[View-once] ";
+		m = viewOnceInner;
+	}
 
 	const text =
 		m.conversation || m.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || "";
@@ -119,7 +127,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 				writeFileSync(filePath, buffer);
 				const sizeKb = Math.round(buffer.length / 1024);
 				images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
-				descriptions.push(`[Image saved: ${filePath} (${sizeKb} KB)]`);
+				descriptions.push(`${viewOncePrefix}[Image saved: ${filePath} (${sizeKb} KB)]`);
 				log(`📸 image: ${filePath}`);
 			}
 		} catch (err) {
@@ -141,7 +149,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 				writeFileSync(filePath, buffer);
 				const sizeKb = Math.round(buffer.length / 1024);
 				images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
-				descriptions.push(`[Sticker saved: ${filePath} (${sizeKb} KB)]`);
+				descriptions.push(`${viewOncePrefix}[Sticker saved: ${filePath} (${sizeKb} KB)]`);
 				log(`🎨 sticker: ${filePath}`);
 			}
 		} catch (err) {
@@ -166,7 +174,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			writeFileSync(filePath, buffer);
 			const label = isGif ? "GIF" : "Video";
 			const sizeKb = Math.round(buffer.length / 1024);
-			const desc = `[${label} received: ${filePath} (${sizeKb} KB)]`;
+			const desc = `${viewOncePrefix}[${label} received: ${filePath} (${sizeKb} KB)]`;
 			log(`🎬 ${label.toLowerCase()}: ${filePath}`);
 			return { text: text ? `${desc}\n${text}` : desc, images };
 		} catch (err) {
@@ -193,7 +201,7 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			const sizeKb = Math.round(buffer.length / 1024);
 
 			const transcript = await transcribe(filePath);
-			const parts = [`[${label}: ${filePath} (${sizeKb} KB)]`];
+			const parts = [`${viewOncePrefix}[${label}: ${filePath} (${sizeKb} KB)]`];
 			if (transcript) {
 				parts.push(`[Transcription: ${transcript}]`);
 				log(`🎤 ${label.toLowerCase()}: ${transcript.substring(0, 80)}`);
@@ -222,12 +230,67 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 			const filePath = join(mediaDir, `${timestamp()}_${originalName}`);
 			writeFileSync(filePath, buffer);
 			const sizeKb = Math.round(buffer.length / 1024);
-			const desc = `[Document received: ${filePath} (${sizeKb} KB, ${mime})]`;
+			const desc = `${viewOncePrefix}[Document received: ${filePath} (${sizeKb} KB, ${mime})]`;
 			log(`📄 document: ${filePath}`);
 			return { text: text ? `${desc}\n${text}` : desc, images };
 		} catch (err) {
 			logError("Failed to download document:", err);
 		}
+	}
+
+	// Location
+	if (m.locationMessage) {
+		const loc = m.locationMessage;
+		const lat = loc.degreesLatitude;
+		const lng = loc.degreesLongitude;
+		const name = loc.name;
+		const address = loc.address;
+		let desc: string;
+		if (name) {
+			desc = `[Location: ${name} (${lat}, ${lng})${address ? ` — ${address}` : ""}]`;
+		} else {
+			desc = `[Location: ${lat}, ${lng}]`;
+		}
+		descriptions.push(`${viewOncePrefix}${desc}`);
+		log(`📍 location: ${lat}, ${lng}`);
+	}
+
+	// Live location
+	if (m.liveLocationMessage) {
+		const loc = m.liveLocationMessage;
+		const lat = loc.degreesLatitude;
+		const lng = loc.degreesLongitude;
+		const accuracy = loc.accuracyInMeters;
+		const desc = `[Live location: ${lat}, ${lng}${accuracy ? ` — accuracy: ${accuracy}m` : ""}]`;
+		descriptions.push(`${viewOncePrefix}${desc}`);
+		log(`📍 live location: ${lat}, ${lng}`);
+	}
+
+	// Contact/vCard
+	if (m.contactMessage) {
+		const name = m.contactMessage.displayName || "Unknown";
+		const vcard = m.contactMessage.vcard || "";
+		descriptions.push(`${viewOncePrefix}[Contact: ${name}]\n${vcard}`);
+		log(`👤 contact: ${name}`);
+	}
+
+	// Contact array
+	if (m.contactsArrayMessage?.contacts) {
+		for (const contact of m.contactsArrayMessage.contacts) {
+			const name = contact.displayName || "Unknown";
+			const vcard = contact.vcard || "";
+			descriptions.push(`${viewOncePrefix}[Contact: ${name}]\n${vcard}`);
+		}
+		log(`👤 contacts: ${m.contactsArrayMessage.contacts.length} received`);
+	}
+
+	// Poll
+	const poll = m.pollCreationMessage || m.pollCreationMessageV3;
+	if (poll) {
+		const question = poll.name || "Untitled poll";
+		const options = poll.options?.map((o, i) => `${i + 1}. ${o.optionName}`).join("\n") || "";
+		descriptions.push(`${viewOncePrefix}[Poll: "${question}"]\n${options}`);
+		log(`📊 poll: ${question}`);
 	}
 
 	const fullText = [...descriptions, text].filter(Boolean).join("\n");

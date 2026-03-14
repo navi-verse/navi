@@ -14,7 +14,7 @@
     "ci": "tsc --noEmit && biome check src/"
   },
   "dependencies": {
-    "@mariozechner/pi-coding-agent": "^0.57.1",
+    "@mariozechner/pi-coding-agent": "^0.58.1",
     "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys",
     "croner": "^10.0.1",
     "pino": "^10.3.1",
