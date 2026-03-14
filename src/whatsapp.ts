@@ -17,6 +17,7 @@ import pino from "pino";
 import qrcode from "qrcode-terminal";
 import type { ChannelContext, ImageAttachment } from "./channel";
 import { config, getChatPaths, log, logError } from "./config";
+import { checkMediaSize, formatSize, getMaxSizeBytes } from "./media";
 import { transcribe } from "./stt";
 
 export type MessageHandler = (
@@ -116,13 +117,19 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 	if (m.imageMessage) {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
-			const mime = m.imageMessage.mimetype || "image/jpeg";
-			const filePath = join(mediaDir, `image_${timestamp()}${extForMime(mime)}`);
-			writeFileSync(filePath, buffer);
-			const sizeKb = Math.round(buffer.length / 1024);
-			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
-			descriptions.push(`${viewOncePrefix}[Image saved: ${filePath} (${sizeKb} KB)]`);
-			log(`📸 image: ${filePath}`);
+			if (!checkMediaSize(buffer.length)) {
+				const desc = `[Image skipped: ${formatSize(buffer.length)}, limit is ${formatSize(getMaxSizeBytes())}]`;
+				descriptions.push(desc);
+				log(`📸 image skipped: too large (${formatSize(buffer.length)})`);
+			} else {
+				const mime = m.imageMessage.mimetype || "image/jpeg";
+				const filePath = join(mediaDir, `image_${timestamp()}${extForMime(mime)}`);
+				writeFileSync(filePath, buffer);
+				const sizeKb = Math.round(buffer.length / 1024);
+				images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
+				descriptions.push(`${viewOncePrefix}[Image saved: ${filePath} (${sizeKb} KB)]`);
+				log(`📸 image: ${filePath}`);
+			}
 		} catch (err) {
 			logError("Failed to download image:", err);
 		}
@@ -132,13 +139,19 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 	if (m.stickerMessage) {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
-			const mime = m.stickerMessage.mimetype || "image/webp";
-			const filePath = join(mediaDir, `sticker_${timestamp()}${extForMime(mime)}`);
-			writeFileSync(filePath, buffer);
-			const sizeKb = Math.round(buffer.length / 1024);
-			images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
-			descriptions.push(`${viewOncePrefix}[Sticker saved: ${filePath} (${sizeKb} KB)]`);
-			log(`🎨 sticker: ${filePath}`);
+			if (!checkMediaSize(buffer.length)) {
+				const desc = `[Sticker skipped: ${formatSize(buffer.length)}, limit is ${formatSize(getMaxSizeBytes())}]`;
+				descriptions.push(desc);
+				log(`🎨 sticker skipped: too large (${formatSize(buffer.length)})`);
+			} else {
+				const mime = m.stickerMessage.mimetype || "image/webp";
+				const filePath = join(mediaDir, `sticker_${timestamp()}${extForMime(mime)}`);
+				writeFileSync(filePath, buffer);
+				const sizeKb = Math.round(buffer.length / 1024);
+				images.push({ type: "image", data: buffer.toString("base64"), mimeType: mime });
+				descriptions.push(`${viewOncePrefix}[Sticker saved: ${filePath} (${sizeKb} KB)]`);
+				log(`🎨 sticker: ${filePath}`);
+			}
 		} catch (err) {
 			logError("Failed to download sticker:", err);
 		}
@@ -148,6 +161,12 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 	if (m.videoMessage) {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
+			if (!checkMediaSize(buffer.length)) {
+				const label = m.videoMessage.gifPlayback ? "GIF" : "Video";
+				const desc = `[${label} skipped: ${formatSize(buffer.length)}, limit is ${formatSize(getMaxSizeBytes())}]`;
+				log(`🎬 ${label.toLowerCase()} skipped: too large (${formatSize(buffer.length)})`);
+				return { text: text ? `${desc}\n${text}` : desc, images };
+			}
 			const isGif = m.videoMessage.gifPlayback;
 			const mime = m.videoMessage.mimetype || "video/mp4";
 			const prefix = isGif ? "gif" : "video";
@@ -167,6 +186,12 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 	if (m.audioMessage) {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
+			if (!checkMediaSize(buffer.length)) {
+				const label = m.audioMessage.ptt ? "Voice note" : "Audio";
+				const desc = `[${label} skipped: ${formatSize(buffer.length)}, limit is ${formatSize(getMaxSizeBytes())}]`;
+				log(`🎵 ${label.toLowerCase()} skipped: too large (${formatSize(buffer.length)})`);
+				return { text: text ? `${desc}\n${text}` : desc, images };
+			}
 			const mime = m.audioMessage.mimetype || "audio/ogg; codecs=opus";
 			const isVoice = m.audioMessage.ptt;
 			const prefix = isVoice ? "voice" : "audio";
@@ -194,6 +219,12 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 	if (m.documentMessage) {
 		try {
 			const buffer = (await downloadMediaMessage(msg, "buffer", {})) as Buffer;
+			if (!checkMediaSize(buffer.length)) {
+				const name = m.documentMessage.fileName || "document";
+				const desc = `[Document "${name}" skipped: ${formatSize(buffer.length)}, limit is ${formatSize(getMaxSizeBytes())}]`;
+				log(`📄 document skipped: too large (${formatSize(buffer.length)})`);
+				return { text: text ? `${desc}\n${text}` : desc, images };
+			}
 			const mime = m.documentMessage.mimetype || "application/octet-stream";
 			const originalName = m.documentMessage.fileName || `document_${timestamp()}${extForMime(mime)}`;
 			const filePath = join(mediaDir, `${timestamp()}_${originalName}`);
