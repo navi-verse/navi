@@ -36,7 +36,7 @@ export function getAuthStorage(): AuthStorage {
 
 export function initAgent() {
 	authStorage = AuthStorage.create(join(dataDir, "auth.json"));
-	modelRegistry = new ModelRegistry(authStorage);
+	modelRegistry = new ModelRegistry(authStorage, join(dataDir, "models.json"));
 
 	mkdirSync(config.workspaceDir, { recursive: true });
 	initBrain();
