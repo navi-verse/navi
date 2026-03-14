@@ -113,6 +113,41 @@ async function extractMedia(msg: WAMessage, mediaDir: string): Promise<Extracted
 
 	const descriptions: string[] = [];
 
+	// Context info (replies, forwards) — available on most message types
+	const contextInfo =
+		m.extendedTextMessage?.contextInfo ||
+		m.imageMessage?.contextInfo ||
+		m.videoMessage?.contextInfo ||
+		m.audioMessage?.contextInfo ||
+		m.documentMessage?.contextInfo ||
+		m.stickerMessage?.contextInfo;
+
+	if (contextInfo?.isForwarded) {
+		descriptions.push("[Forwarded]");
+	}
+
+	if (contextInfo?.quotedMessage) {
+		const q = contextInfo.quotedMessage;
+		const quotedText =
+			q.conversation || q.extendedTextMessage?.text || q.imageMessage?.caption || q.videoMessage?.caption || "";
+		const quotedType = q.imageMessage
+			? "image"
+			: q.videoMessage
+				? "video"
+				: q.audioMessage
+					? "audio"
+					: q.documentMessage
+						? "document"
+						: q.stickerMessage
+							? "sticker"
+							: "";
+		const parts = ["[Reply to:"];
+		if (quotedText) parts.push(quotedText);
+		else if (quotedType) parts.push(`(${quotedType})`);
+		parts.push("]");
+		descriptions.push(parts.join(" "));
+	}
+
 	// Image
 	if (m.imageMessage) {
 		try {
