@@ -57,7 +57,44 @@ navi uninstall        # remove service and CLI link
 
 ## Skills
 
-Extend Navi with community skills from [navi-verse/skills](https://github.com/navi-verse/skills).
+Navi ships with a catalog of curated skills at `skills/`. They're not active by default — ask Navi to install them ("what skills do you have?", "install the weather skill") or copy manually:
+
+```bash
+cp -r skills/weather ~/.navi/skills/weather
+```
+
+### Built-in (always active)
+
+| Skill | Description |
+|-------|-------------|
+| self | Understand and modify Navi's own source code |
+| create-skill | Create new skills on demand |
+| install-skill | Browse and install from the skill catalog |
+
+### Catalog
+
+| Skill | Description |
+|-------|-------------|
+| bitwarden | Look up passwords and secrets from Bitwarden/Vaultwarden |
+| browser-use | AI-driven browser automation for complex web tasks |
+| codexbar | Check AI provider usage, credits, and quotas |
+| gifgrep | Search and send animated GIFs |
+| github | Manage repos, issues, PRs, and workflows via `gh` CLI |
+| hue | Control Philips Hue lights |
+| imagegen | Generate and edit images via OpenAI Image API |
+| notes | Create, read, and search Apple Notes |
+| pdf | Read, create, merge, split, fill forms, OCR — anything PDF |
+| peekaboo | Automate native macOS UI (click, type, screenshots) |
+| playwright | Browser automation via Playwright CLI |
+| print | Print files to a network printer |
+| reminders | Manage Apple Reminders |
+| screenshot | Take desktop/window/region screenshots |
+| speech | Text-to-speech via OpenAI Audio API |
+| truenas | Monitor and manage TrueNAS storage |
+| tts | Reply with voice notes |
+| unifi | Query UniFi network devices and Protect cameras |
+| weather | Check weather and forecasts |
+| xlsx | Read, create, and edit spreadsheets |
 
 ## Security
 
