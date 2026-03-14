@@ -3,6 +3,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import {
+	type AgentSession,
 	AuthStorage,
 	codingTools,
 	createAgentSession,
@@ -13,7 +14,9 @@ import {
 	ModelRegistry,
 	SessionManager,
 	SettingsManager,
+	type ToolDefinition,
 } from "@mariozechner/pi-coding-agent";
+import { Type } from "@sinclair/typebox";
 import { initBrain, initHistory, loadGlobal } from "./brain";
 import type { ImageAttachment } from "./channel";
 import { brainDir, config, dataDir, getChatPaths, log } from "./config";
@@ -22,6 +25,23 @@ import { buildSystemPrompt } from "./prompts";
 import { initRoutines } from "./routines";
 import { webFetchTool, webSearchTool } from "./web";
 import { createSendMediaTool } from "./whatsapp";
+
+function createReloadTool(sessionRef: { current?: AgentSession }): ToolDefinition {
+	return {
+		name: "reload",
+		label: "Reload",
+		description: "Reload skills, extensions, and settings. Use after installing or modifying a skill.",
+		promptSnippet: "reload — pick up new/changed skills without restarting the session",
+		parameters: Type.Object({}),
+		async execute() {
+			if (!sessionRef.current) {
+				return { content: [{ type: "text", text: "Error: no active session." }], details: {} };
+			}
+			await sessionRef.current.reload();
+			return { content: [{ type: "text", text: "Reloaded." }], details: {} };
+		},
+	};
+}
 
 // Stores active sessions keyed by contact ID
 const sessions = new Map<string, Awaited<ReturnType<typeof createAgentSession>>>();
@@ -95,6 +115,8 @@ async function getSession(contactId: string, contactName = "") {
 		skills: config.skills,
 	});
 
+	const sessionRef: { current?: AgentSession } = {};
+
 	const hasChatSoul = existsSync(paths.soul);
 	const soul = hasChatSoul ? readFileSync(paths.soul, "utf-8").trim() : config.soul;
 	const soulSource = hasChatSoul ? paths.soul : config.soulSource;
@@ -129,9 +151,16 @@ async function getSession(contactId: string, contactName = "") {
 		resourceLoader,
 		sessionManager: SessionManager.continueRecent(paths.playground, paths.session),
 		tools: [...codingTools, grepTool, findTool, lsTool],
-		customTools: [createJobTool(contactId, paths.jobs), createSendMediaTool(contactId), webSearchTool, webFetchTool],
+		customTools: [
+			createJobTool(contactId, paths.jobs),
+			createSendMediaTool(contactId),
+			createReloadTool(sessionRef),
+			webSearchTool,
+			webFetchTool,
+		],
 	});
 
+	sessionRef.current = result.session;
 	sessions.set(contactId, result);
 	const resumed = result.session.sessionManager.getEntries().length > 0;
 	log(`${resumed ? "♻️" : "🆕"} ${contactId}: session ${resumed ? "resumed" : "created"}`, { contactId });
