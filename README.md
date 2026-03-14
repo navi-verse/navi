@@ -55,6 +55,10 @@ navi uninstall        # remove service and CLI link
 | `/status` | Show model and context info     |
 | `/help`   | List available commands         |
 
+## Skills
+
+Extend Navi with community skills from [navi-verse/skills](https://github.com/navi-verse/skills).
+
 ## Security
 
 - **The agent has shell access** on the host. Run in a container/VM if you don't fully trust the people messaging it.
