@@ -1,5 +1,6 @@
 // index.ts — Main entry point
 
+import { execSync } from "node:child_process";
 import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
 import { log, logError } from "./config";
@@ -10,9 +11,14 @@ import { startRoutines } from "./routines";
 import { connectWhatsApp, getSocket, splitMessage } from "./whatsapp";
 
 async function main() {
-	log("╔══════════════════════════════════════╗");
-	log("║   Navi Personal Assistant            ║");
-	log("╚══════════════════════════════════════╝\n");
+	const version = (() => {
+		try {
+			return execSync("git describe --tags --long 2>/dev/null", { encoding: "utf-8" }).trim();
+		} catch {
+			return "unknown";
+		}
+	})();
+	log(`🚀 Navi ${version}`);
 
 	initAgent();
 	cleanupMedia();
