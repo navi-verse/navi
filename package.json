@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "tsx src/index.ts",
     "login": "tsx src/login.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "check": "tsc --noEmit && biome check --write src/",
     "ci": "tsc --noEmit && biome check src/"
   },
@@ -22,6 +24,7 @@
     "@biomejs/biome": "^2.4.6",
     "@types/node": "^25.4.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   }
 }

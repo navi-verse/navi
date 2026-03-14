@@ -145,7 +145,7 @@ function ts(): string {
 	return `${hh}:${mm}:${ss}`;
 }
 
-function extractFields(args: unknown[]): { msg: string; fields: Record<string, unknown> } {
+export function extractFields(args: unknown[]): { msg: string; fields: Record<string, unknown> } {
 	const last = args[args.length - 1];
 	const hasFields =
 		args.length > 1 && typeof last === "object" && last !== null && !(last instanceof Error) && !Array.isArray(last);
@@ -188,7 +188,7 @@ const PREFIX_TO_DOMAIN: Record<string, string> = Object.fromEntries(
 	Object.entries(DOMAIN_TO_PREFIX).map(([d, p]) => [p, d]),
 );
 
-function getChatDirName(contactId: string): string {
+export function getChatDirName(contactId: string): string {
 	const [local, domain] = contactId.split("@");
 	const prefix = DOMAIN_TO_PREFIX[domain] ?? "s";
 	return `${prefix}_${local}`;

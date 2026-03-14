@@ -13,7 +13,7 @@ export function initRoutines(routines: string) {
 
 const templateLine = "(Tasks to check periodically. One per line.)";
 
-function hasRealTasks(content: string): boolean {
+export function hasRealTasks(content: string): boolean {
 	return content.split("\n").some((line) => {
 		const trimmed = line.trim();
 		return trimmed !== "" && trimmed !== "# Routines" && trimmed !== templateLine;

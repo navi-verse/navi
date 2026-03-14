@@ -75,11 +75,11 @@ const EXT_TO_MIME: Record<string, string> = {
 	".zip": "application/zip",
 };
 
-function extForMime(mime: string): string {
+export function extForMime(mime: string): string {
 	return MIME_TO_EXT[mime] || `.${mime.split("/").pop() || "bin"}`;
 }
 
-function mimeForExt(filePath: string): string {
+export function mimeForExt(filePath: string): string {
 	return EXT_TO_MIME[extname(filePath).toLowerCase()] || "application/octet-stream";
 }
 

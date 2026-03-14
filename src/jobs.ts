@@ -10,7 +10,7 @@ import { config, contactIdFromDirName, log, logError } from "./config";
 
 // ── Types ────────────────────────────────────────────
 
-interface Job {
+export interface Job {
 	id: string;
 	type: "at" | "every" | "cron";
 	message: string;
@@ -59,7 +59,7 @@ function genId(): string {
 	return randomBytes(4).toString("hex");
 }
 
-function getNextFireTime(job: Job): Date | null {
+export function getNextFireTime(job: Job): Date | null {
 	const now = new Date();
 
 	if (job.type === "at" && job.datetime) {
@@ -189,7 +189,7 @@ const jobParams = Type.Object({
 
 type JobParams = Static<typeof jobParams>;
 
-function formatJob(job: Job): string {
+export function formatJob(job: Job): string {
 	const next = getNextFireTime(job);
 	const nextStr = next ? next.toISOString() : "none";
 	const label = job.label ? ` (${job.label})` : "";

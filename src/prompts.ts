@@ -1,6 +1,6 @@
 // prompts.ts — System prompt composition and event prompts
 
-interface BuildSystemPromptOptions {
+export interface BuildSystemPromptOptions {
 	soul: string;
 	soulSource: string;
 	agents: string;

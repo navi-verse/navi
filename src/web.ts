@@ -81,7 +81,7 @@ const fetchParams = Type.Object({
 
 type FetchParams = Static<typeof fetchParams>;
 
-function htmlToText(html: string): string {
+export function htmlToText(html: string): string {
 	return (
 		html
 			// Remove script and style blocks
