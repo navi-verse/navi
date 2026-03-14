@@ -80,6 +80,6 @@ Prefer config/skill changes over code changes when possible. Code changes are mo
 ## Git workflow
 
 The project uses git. When making code changes:
-- Work on the `dev` branch, never directly on `main`
+- All development happens on `main`
 - Commit meaningful changes with descriptive messages
 - The user may want to review changes before committing

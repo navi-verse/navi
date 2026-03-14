@@ -68,9 +68,8 @@ npm run login   — Log in to an AI provider
 
 ## Git workflow
 
-- **`dev` is the working branch** — all development happens on `dev`, never commit directly to `main`
-- **`main` is for releases only** — merge `dev` → `main` when ready to release
-- **Tag releases** on `main` with `v*` (e.g. `v0.2.0`) — triggers GitHub Release workflow
+- **All development happens on `main`**
+- **Tag releases** with `v*` (e.g. `v0.2.0`) — triggers GitHub Release workflow
 
 ## Workflow preferences
 
