@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.navi
+.claude
+*.md
+!defaults/*.md
+.env
+.DS_Store

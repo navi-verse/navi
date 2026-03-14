@@ -76,6 +76,28 @@ Extend Navi with community skills from [navi-verse/skills](https://github.com/na
   whatsapp-auth/        # WhatsApp credentials (keep private!)
 ```
 
+## Docker
+
+Build and run Navi in a container:
+
+```bash
+docker compose up -d          # build + start in background
+docker compose logs -f        # follow logs (scan QR code here)
+docker compose down           # stop
+```
+
+Data (settings, auth, brain, sessions) persists in a Docker volume. To configure, edit `settings.json` inside the volume or bind-mount a local directory:
+
+```yaml
+# docker-compose.yml override
+services:
+  navi:
+    volumes:
+      - ./navi-data:/data
+```
+
+> **Note:** The interactive `npm run login` step must be done before building the image, or you can copy provider credentials into the data volume manually.
+
 ## Development
 
 ```bash

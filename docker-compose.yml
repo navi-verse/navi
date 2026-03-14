@@ -1,0 +1,9 @@
+services:
+  navi:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - navi-data:/data
+
+volumes:
+  navi-data:
