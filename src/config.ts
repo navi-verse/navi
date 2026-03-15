@@ -35,6 +35,13 @@ type PackageSource =
 			themes?: string[];
 	  };
 
+export interface McpServerConfig {
+	command?: string;
+	args?: string[];
+	env?: Record<string, string>;
+	url?: string;
+}
+
 interface NaviSettings {
 	allowedJids: string[];
 	model?: string;
@@ -52,6 +59,7 @@ interface NaviSettings {
 	routineIntervalSeconds?: number;
 	mediaMaxSizeMb?: number;
 	mediaRetentionDays?: number;
+	mcpServers?: Record<string, McpServerConfig>;
 }
 
 // ── Load settings ────────────────────────────────────

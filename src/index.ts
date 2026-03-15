@@ -5,6 +5,7 @@ import { chat, initAgent } from "./agent";
 import { handleMessage } from "./channel";
 import { log, logError } from "./config";
 import { startJobs } from "./jobs";
+import { disconnectMcpServers } from "./mcp";
 import { cleanupMedia } from "./media";
 import { jobPrompt } from "./prompts";
 import { startRoutines } from "./routines";
@@ -20,8 +21,16 @@ async function main() {
 	})();
 	log(`🚀 Navi ${version}`);
 
-	initAgent();
+	await initAgent();
 	cleanupMedia();
+
+	const shutdown = async () => {
+		log("🛑 Shutting down...");
+		await disconnectMcpServers();
+		process.exit(0);
+	};
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
 
 	await connectWhatsApp(handleMessage);
 

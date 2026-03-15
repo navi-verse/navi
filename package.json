@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@mariozechner/pi-coding-agent": "^0.58.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys",
     "croner": "^10.0.1",
     "pino": "^10.3.1",

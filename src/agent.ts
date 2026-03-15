@@ -21,6 +21,7 @@ import { initBrain, initHistory, loadGlobal } from "./brain";
 import type { ImageAttachment } from "./channel";
 import { brainDir, config, dataDir, getChatPaths, log } from "./config";
 import { createJobTool } from "./jobs";
+import { connectMcpServers, getMcpTools } from "./mcp";
 import { buildSystemPrompt } from "./prompts";
 import { initRoutines } from "./routines";
 import { webFetchTool, webSearchTool } from "./web";
@@ -54,7 +55,7 @@ export function getAuthStorage(): AuthStorage {
 	return authStorage;
 }
 
-export function initAgent() {
+export async function initAgent() {
 	authStorage = AuthStorage.create(join(dataDir, "auth.json"));
 	modelRegistry = new ModelRegistry(authStorage, join(dataDir, "models.json"));
 
@@ -73,6 +74,8 @@ export function initAgent() {
 	if (config.model) {
 		log(`📌 Model: ${config.model}`);
 	}
+
+	await connectMcpServers();
 
 	log("🤖 Navi: initialized");
 }
@@ -157,6 +160,7 @@ async function getSession(contactId: string, contactName = "") {
 			createReloadTool(sessionRef),
 			webSearchTool,
 			webFetchTool,
+			...getMcpTools(),
 		],
 	});
 
