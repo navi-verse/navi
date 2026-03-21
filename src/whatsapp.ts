@@ -240,6 +240,12 @@ export class WhatsAppBot {
 			displayText = text || "(media)";
 		}
 
+		// Add context for replies and forwards
+		const contextInfo = this.getContextInfo(msg);
+		if (contextInfo) {
+			displayText = `${contextInfo}\n${displayText}`;
+		}
+
 		const waEvent: WhatsAppEvent = {
 			chatId,
 			ts,
@@ -308,6 +314,42 @@ export class WhatsAppBot {
 		}
 
 		return null;
+	}
+
+	private getContextInfo(msg: WAMessage): string | null {
+		const m = msg.message;
+		if (!m) return null;
+
+		// Extract contextInfo from whichever message type has it
+		const ctx =
+			m.extendedTextMessage?.contextInfo ||
+			m.imageMessage?.contextInfo ||
+			m.videoMessage?.contextInfo ||
+			m.audioMessage?.contextInfo ||
+			m.documentMessage?.contextInfo;
+
+		if (!ctx) return null;
+
+		const parts: string[] = [];
+
+		// Forwarded message
+		if (ctx.isForwarded) {
+			parts.push("(forwarded)");
+		}
+
+		// Reply to a specific message
+		if (ctx.stanzaId && ctx.quotedMessage) {
+			const quoted = ctx.quotedMessage;
+			const quotedText =
+				quoted.conversation ||
+				quoted.extendedTextMessage?.text ||
+				quoted.imageMessage?.caption ||
+				quoted.videoMessage?.caption ||
+				"(media)";
+			parts.push(`(replying to: "${quotedText}")`);
+		}
+
+		return parts.length > 0 ? parts.join(" ") : null;
 	}
 
 	private isVoiceMessage(msg: WAMessage): boolean {
