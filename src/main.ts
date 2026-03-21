@@ -2,6 +2,7 @@
 
 import { AuthStorage } from "@mariozechner/pi-coding-agent";
 import { execSync } from "child_process";
+import { statSync, unlinkSync } from "fs";
 import { homedir } from "os";
 import { join, resolve } from "path";
 import { createInterface } from "readline";
@@ -340,6 +341,55 @@ const handler: NvHandler = {
 		} else {
 			await bot.sendMessage(chatId, "_Nothing running_");
 		}
+	},
+
+	handleNew(chatId: string, bot: WhatsAppBot): void {
+		const chatDir = join(workingDir, chatId);
+		const contextFile = join(chatDir, "context.jsonl");
+		try {
+			unlinkSync(contextFile);
+		} catch {}
+		// Remove cached runner so a fresh one is created
+		chatStates.delete(chatId);
+		bot.sendMessage(chatId, "_Context cleared. Fresh start._");
+		log.logInfo(`[${chatId}] Context reset via /new`);
+	},
+
+	handleStatus(chatId: string, bot: WhatsAppBot): void {
+		const state = chatStates.get(chatId);
+		const chatDir = join(workingDir, chatId);
+		const contextFile = join(chatDir, "context.jsonl");
+
+		let contextSize = "0";
+		try {
+			const stats = statSync(contextFile);
+			contextSize = `${(stats.size / 1024).toFixed(1)}KB`;
+		} catch {}
+
+		const uptime = process.uptime();
+		const hours = Math.floor(uptime / 3600);
+		const mins = Math.floor((uptime % 3600) / 60);
+
+		const lines = [
+			`*Navi Status*`,
+			`Running: ${state?.running ? "yes" : "idle"}`,
+			`Uptime: ${hours}h ${mins}m`,
+			`Context: ${contextSize}`,
+			`Tools: 12`,
+			`Model: claude-sonnet-4-6 (1M)`,
+		];
+		bot.sendMessage(chatId, lines.join("\n"));
+	},
+
+	handleHelp(chatId: string, bot: WhatsAppBot): void {
+		const lines = [
+			"*Commands*",
+			"/new — fresh conversation",
+			"/status — bot status",
+			"/help — this message",
+			"stop — cancel current task",
+		];
+		bot.sendMessage(chatId, lines.join("\n"));
 	},
 
 	async handleEvent(event: WhatsAppEvent, bot: WhatsAppBot, isEvent?: boolean): Promise<void> {

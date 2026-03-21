@@ -58,6 +58,9 @@ export interface NvHandler {
 	handleEvent(event: WhatsAppEvent, bot: WhatsAppBot, isEvent?: boolean): Promise<void>;
 	handleSteer(chatId: string, text: string): void;
 	handleStop(chatId: string, bot: WhatsAppBot): Promise<void>;
+	handleNew(chatId: string, bot: WhatsAppBot): void;
+	handleStatus(chatId: string, bot: WhatsAppBot): void;
+	handleHelp(chatId: string, bot: WhatsAppBot): void;
 }
 
 // ============================================================================
@@ -259,13 +262,26 @@ export class WhatsAppBot {
 
 		log.logUserMessage({ chatId, contactName: pushName }, displayText.substring(0, 100));
 
-		// Handle stop command
-		if (text && text.toLowerCase().trim() === "stop") {
+		// Handle commands
+		const cmd = text?.trim().toLowerCase();
+		if (cmd === "stop") {
 			if (this.handler.isRunning(chatId)) {
 				this.handler.handleStop(chatId, this);
 			} else {
 				this.sendMessage(chatId, "_Nothing running_");
 			}
+			return;
+		}
+		if (cmd === "/new") {
+			this.handler.handleNew(chatId, this);
+			return;
+		}
+		if (cmd === "/status") {
+			this.handler.handleStatus(chatId, this);
+			return;
+		}
+		if (cmd === "/help") {
+			this.handler.handleHelp(chatId, this);
 			return;
 		}
 
