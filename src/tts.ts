@@ -22,6 +22,9 @@ export async function textToSpeech(text: string, outputPath: string, voiceId?: s
 	}
 
 	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 15000);
+
 		const response = await fetch(`${TTS_URL}/${voiceId || DEFAULT_VOICE_ID}?output_format=mp3_44100_128`, {
 			method: "POST",
 			headers: {
@@ -32,7 +35,10 @@ export async function textToSpeech(text: string, outputPath: string, voiceId?: s
 				text,
 				model_id: DEFAULT_MODEL,
 			}),
+			signal: controller.signal,
 		});
+
+		clearTimeout(timeout);
 
 		if (!response.ok) {
 			const error = await response.text();
