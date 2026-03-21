@@ -368,10 +368,13 @@ const handler: NvHandler = {
 		const formatT = (n: number) =>
 			n < 1000 ? `${n}` : n < 1000000 ? `${Math.round(n / 1000)}k` : `${(n / 1000000).toFixed(1)}M`;
 
+		const messages = state?.runner.lastMessageCount || 0;
+
 		const lines = [
 			"*Navi Status* 🧚🏼",
 			`⏱ Uptime: ${hours}h ${mins}m`,
 			`🧠 Context: ${formatT(tokens)} / ${formatT(maxTokens)} (${pct}%)`,
+			`💬 Messages: ${messages}`,
 			`⚡ Status: ${state?.running ? "working" : "idle"}`,
 			`🤖 Model: claude-sonnet-4-6`,
 		];

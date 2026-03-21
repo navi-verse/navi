@@ -37,6 +37,7 @@ export interface AgentRunner {
 	steer(text: string): void;
 	abort(): void;
 	lastContextTokens: number;
+	lastMessageCount: number;
 	contextWindow: number;
 }
 
@@ -494,6 +495,7 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 			const reloadedSession = sessionManager.buildSessionContext();
 			if (reloadedSession.messages.length > 0) {
 				agent.replaceMessages(reloadedSession.messages);
+				runner.lastMessageCount = reloadedSession.messages.length;
 				log.logInfo(`[${chatId}] Reloaded ${reloadedSession.messages.length} messages from context`);
 			}
 
@@ -673,6 +675,7 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 		},
 
 		lastContextTokens: 0,
+		lastMessageCount: 0,
 		contextWindow: model.contextWindow || 1000000,
 	};
 
