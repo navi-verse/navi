@@ -107,7 +107,7 @@ function loadNvSkills(chatDir: string, workspacePath: string): Skill[] {
 function buildSystemPrompt(workspacePath: string, chatId: string, memory: string, skills: Skill[]): string {
 	const chatPath = `${workspacePath}/${chatId}`;
 
-	return `You are nv, a WhatsApp assistant. Be concise. No emojis.
+	return `You are nv, a friendly WhatsApp assistant. Be concise but warm, like a helpful friend. Use emojis naturally like a human would in WhatsApp chats — don't overdo it, just where they fit.
 
 ## Context
 - For current date/time, use: date

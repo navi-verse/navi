@@ -14,6 +14,7 @@ import { join } from "path";
 import pino from "pino";
 import qrcode from "qrcode-terminal";
 import * as log from "./log.js";
+import { transcribeAudio } from "./transcribe.js";
 
 const waLogger = pino({ level: "silent" });
 
@@ -190,18 +191,33 @@ export class WhatsAppBot {
 
 		// Download media if present
 		const attachments: Array<{ local: string }> = [];
+		let transcription: string | null = null;
 		if (hasMedia) {
 			try {
 				const { fileName, data } = await this.downloadMedia(msg);
 				const attachment = await this.store.saveAttachment(chatId, fileName, data, ts);
 				attachments.push({ local: attachment.local });
 				log.logInfo(`[${chatId}] Downloaded attachment: ${fileName}`);
+
+				// Transcribe voice/audio messages
+				if (this.isVoiceMessage(msg)) {
+					const fullPath = join(this.workingDir, attachment.local);
+					transcription = await transcribeAudio(fullPath);
+					if (transcription) {
+						log.logInfo(`[${chatId}] Transcribed: ${transcription.substring(0, 80)}`);
+					}
+				}
 			} catch (err) {
 				log.logWarning("Failed to download media", err instanceof Error ? err.message : String(err));
 			}
 		}
 
-		const displayText = text || "(media)";
+		let displayText: string;
+		if (transcription) {
+			displayText = text ? `${text}\n(voice): ${transcription}` : `(voice): ${transcription}`;
+		} else {
+			displayText = text || "(media)";
+		}
 
 		const waEvent: WhatsAppEvent = {
 			chatId,
@@ -257,6 +273,12 @@ export class WhatsAppBot {
 		}
 
 		return null;
+	}
+
+	private isVoiceMessage(msg: WAMessage): boolean {
+		const m = msg.message;
+		if (!m) return false;
+		return !!m.audioMessage;
 	}
 
 	private hasMedia(msg: WAMessage): boolean {
