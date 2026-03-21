@@ -20,16 +20,27 @@ export function createWebFetchTool(): AgentTool<typeof webFetchSchema> {
 			"Fetch a web page and return its content as clean markdown. Use this to read articles, documentation, or any web page.",
 		parameters: webFetchSchema,
 		execute: async (_toolCallId: string, { url }: { label: string; url: string }, signal?: AbortSignal) => {
-			const response = await fetch(`${JINA_READER_URL}${url}`, {
+			let content: string;
+
+			// Try Jina Reader first, fall back to direct fetch
+			const jinaResponse = await fetch(`${JINA_READER_URL}${url}`, {
 				headers: { Accept: "text/markdown" },
 				signal,
 			});
 
-			if (!response.ok) {
-				throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+			if (jinaResponse.ok) {
+				content = await jinaResponse.text();
+			} else {
+				// Fallback: direct fetch
+				const directResponse = await fetch(url, {
+					headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+					signal,
+				});
+				if (!directResponse.ok) {
+					throw new Error(`Failed to fetch ${url}: ${directResponse.status} ${directResponse.statusText}`);
+				}
+				content = await directResponse.text();
 			}
-
-			const content = await response.text();
 			const truncation = truncateHead(content);
 
 			let outputText = truncation.content || "(empty page)";

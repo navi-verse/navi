@@ -255,6 +255,7 @@ function getState(chatId: string): ChatState {
 function createWhatsAppContext(event: WhatsAppEvent, bot: WhatsAppBot, state: ChatState, _isEvent?: boolean) {
 	let accumulatedText = "";
 	let messageLogged = false;
+	let typingInterval: NodeJS.Timeout | null = null;
 
 	return {
 		message: {
@@ -284,7 +285,14 @@ function createWhatsAppContext(event: WhatsAppEvent, bot: WhatsAppBot, state: Ch
 		setTyping: async (isTyping: boolean) => {
 			if (isTyping) {
 				await bot.sendTyping(event.chatId);
+				if (!typingInterval) {
+					typingInterval = setInterval(() => bot.sendTyping(event.chatId), 8000);
+				}
 			} else {
+				if (typingInterval) {
+					clearInterval(typingInterval);
+					typingInterval = null;
+				}
 				await bot.sendAvailable(event.chatId);
 			}
 		},
