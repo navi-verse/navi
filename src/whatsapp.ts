@@ -200,6 +200,12 @@ export class WhatsAppBot {
 		if (!this.isAllowed(chatId) && !this.isAllowed(sender)) return;
 
 		// Mark as read (blue ticks)
+		try {
+			await this.sock!.readMessages([msg.key]);
+		} catch {
+			// Ignore read receipt errors
+		}
+
 		const ts = ((msg.messageTimestamp as number) || Math.floor(Date.now() / 1000)).toString();
 		const pushName =
 			msg.pushName || (isGroup ? msg.key.participant || chatId : chatId.replace("@s.whatsapp.net", ""));
