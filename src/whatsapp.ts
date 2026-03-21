@@ -169,9 +169,6 @@ export class WhatsAppBot {
 		// Skip own messages
 		if (msg.key.fromMe) return;
 
-		// DMs only: skip group messages
-		if (msg.key.remoteJid.endsWith("@g.us")) return;
-
 		// Mark as read (blue ticks)
 		try {
 			await this.sock!.readMessages([msg.key]);
@@ -180,8 +177,10 @@ export class WhatsAppBot {
 		}
 
 		const chatId = msg.key.remoteJid;
+		const isGroup = chatId.endsWith("@g.us");
 		const ts = ((msg.messageTimestamp as number) || Math.floor(Date.now() / 1000)).toString();
-		const pushName = msg.pushName || chatId.replace("@s.whatsapp.net", "");
+		const pushName =
+			msg.pushName || (isGroup ? msg.key.participant || chatId : chatId.replace("@s.whatsapp.net", ""));
 
 		const text = this.extractText(msg);
 		const hasMedia = this.hasMedia(msg);
@@ -216,7 +215,7 @@ export class WhatsAppBot {
 		this.store.logToFileSync(chatId, {
 			date: new Date(Number.parseInt(ts, 10) * 1000).toISOString(),
 			ts,
-			user: chatId,
+			user: isGroup ? msg.key.participant || chatId : chatId,
 			userName: pushName,
 			text: displayText,
 			attachments: attachments.map((a) => ({ original: a.local.split("/").pop() || "", local: a.local })),
