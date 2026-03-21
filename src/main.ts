@@ -100,11 +100,44 @@ async function installSkill(ref: string, dataDir: string): Promise<void> {
 	console.log(`Skill "${skillName}" installed to ${skillDir}`);
 }
 
+const LAUNCHD_LABEL = "com.navi.nv";
+
+function serviceCmd(action: "start" | "stop" | "restart" | "status" | "logs"): void {
+	switch (action) {
+		case "start":
+			execSync(`launchctl start ${LAUNCHD_LABEL}`, { stdio: "inherit" });
+			console.log("Started");
+			break;
+		case "stop":
+			execSync(`launchctl stop ${LAUNCHD_LABEL}`, { stdio: "inherit" });
+			console.log("Stopped");
+			break;
+		case "restart":
+			execSync(`launchctl stop ${LAUNCHD_LABEL}`, { stdio: "ignore" });
+			execSync(`launchctl start ${LAUNCHD_LABEL}`, { stdio: "inherit" });
+			console.log("Restarted");
+			break;
+		case "status": {
+			try {
+				const out = execSync(`launchctl list ${LAUNCHD_LABEL} 2>&1`, { encoding: "utf-8" });
+				console.log(out.trim());
+			} catch {
+				console.log("Not running (launchd service not loaded)");
+			}
+			break;
+		}
+		case "logs":
+			execSync("tail -f ~/nv/nv.log", { stdio: "inherit" });
+			break;
+	}
+}
+
 interface ParsedArgs {
 	workingDir?: string;
 	login?: boolean;
 	setKey?: { provider: string; key: string };
 	installSkill?: string;
+	service?: "start" | "stop" | "restart" | "status" | "logs";
 }
 
 function parseArgs(): ParsedArgs {
@@ -113,6 +146,9 @@ function parseArgs(): ParsedArgs {
 	let login = false;
 	let setKey: { provider: string; key: string } | undefined;
 	let skill: string | undefined;
+	let service: ParsedArgs["service"];
+
+	const serviceActions = ["start", "stop", "restart", "status", "logs"] as const;
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
@@ -122,6 +158,8 @@ function parseArgs(): ParsedArgs {
 			setKey = { provider: args[++i], key: args[++i] };
 		} else if (arg === "--install-skill" && args[i + 1]) {
 			skill = args[++i];
+		} else if (serviceActions.includes(arg as any)) {
+			service = arg as ParsedArgs["service"];
 		} else if (!arg.startsWith("-")) {
 			workingDir = arg;
 		}
@@ -132,6 +170,7 @@ function parseArgs(): ParsedArgs {
 		login,
 		setKey,
 		installSkill: skill,
+		service,
 	};
 }
 
@@ -153,11 +192,19 @@ if (parsedArgs.installSkill) {
 	process.exit(0);
 }
 
+if (parsedArgs.service) {
+	serviceCmd(parsedArgs.service);
+	process.exit(0);
+}
+
 if (!parsedArgs.workingDir) {
 	console.error("Usage: nv <working-directory>");
 	console.error("       nv --login                              OAuth login for Anthropic");
 	console.error("       nv --set-key <provider> <key>           Store an API key");
 	console.error("       nv --install-skill <owner/repo/skill>   Install a skill from GitHub");
+	console.error("");
+	console.error("Service:");
+	console.error("       nv start | stop | restart | status | logs");
 	process.exit(1);
 }
 
