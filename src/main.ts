@@ -133,7 +133,7 @@ function serviceCmd(action: "start" | "stop" | "restart" | "status" | "logs"): v
 }
 
 interface ParsedArgs {
-	workingDir?: string;
+	workingDir: string;
 	login?: boolean;
 	setKey?: { provider: string; key: string };
 	installSkill?: string;
@@ -166,7 +166,7 @@ function parseArgs(): ParsedArgs {
 	}
 
 	return {
-		workingDir: workingDir ? resolve(workingDir) : undefined,
+		workingDir: resolve(workingDir || join(homedir(), "nv", "data")),
 		login,
 		setKey,
 		installSkill: skill,
@@ -187,25 +187,13 @@ if (parsedArgs.setKey) {
 }
 
 if (parsedArgs.installSkill) {
-	const dataDir = parsedArgs.workingDir || resolve("./data");
-	await installSkill(parsedArgs.installSkill, dataDir);
+	await installSkill(parsedArgs.installSkill, parsedArgs.workingDir);
 	process.exit(0);
 }
 
 if (parsedArgs.service) {
 	serviceCmd(parsedArgs.service);
 	process.exit(0);
-}
-
-if (!parsedArgs.workingDir) {
-	console.error("Usage: nv <working-directory>");
-	console.error("       nv --login                              OAuth login for Anthropic");
-	console.error("       nv --set-key <provider> <key>           Store an API key");
-	console.error("       nv --install-skill <owner/repo/skill>   Install a skill from GitHub");
-	console.error("");
-	console.error("Service:");
-	console.error("       nv start | stop | restart | status | logs");
-	process.exit(1);
 }
 
 const { workingDir } = { workingDir: parsedArgs.workingDir };
