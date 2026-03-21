@@ -34,7 +34,12 @@ export function createTtsTool(scratchDir?: string): AgentTool<typeof ttsSchema> 
 			const success = await textToSpeech(text, outputPath);
 
 			if (!success) {
-				throw new Error("Text-to-speech failed. Check ElevenLabs API key: nv --set-key elevenlabs <key>");
+				return {
+					content: [
+						{ type: "text", text: `TTS unavailable, respond with text instead. Original message: ${text}` },
+					],
+					details: undefined,
+				};
 			}
 
 			await sendVoiceFn(outputPath);
