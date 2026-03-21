@@ -10,8 +10,8 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json && chmod +x dist/main.js",
 		"install-global": "npm run build && npm install -g .",
-		"dev": "npx tsx --watch-path src --watch src/main.ts",
-		"start": "npx tsx src/main.ts",
+		"dev": "npx tsx --watch-path src --watch src/main.ts run",
+		"start": "npx tsx src/main.ts run",
 		"check": "biome check --write --error-on-warnings . && tsc --noEmit"
 	},
 	"dependencies": {

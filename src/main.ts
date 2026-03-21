@@ -137,7 +137,7 @@ interface ParsedArgs {
 	login?: boolean;
 	setKey?: { provider: string; key: string };
 	installSkill?: string;
-	service?: "start" | "stop" | "restart" | "status" | "logs";
+	service?: "start" | "stop" | "restart" | "status" | "logs" | "run";
 }
 
 function parseArgs(): ParsedArgs {
@@ -148,7 +148,7 @@ function parseArgs(): ParsedArgs {
 	let skill: string | undefined;
 	let service: ParsedArgs["service"];
 
-	const serviceActions = ["start", "stop", "restart", "status", "logs"] as const;
+	const serviceActions = ["start", "stop", "restart", "status", "logs", "run"] as const;
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
@@ -193,8 +193,27 @@ if (parsedArgs.installSkill) {
 	process.exit(0);
 }
 
-if (parsedArgs.service) {
+if (parsedArgs.service && parsedArgs.service !== "run") {
 	serviceCmd(parsedArgs.service);
+	process.exit(0);
+}
+
+if (!parsedArgs.service) {
+	console.log("Usage: nv <command>");
+	console.log("");
+	console.log("Commands:");
+	console.log("  run                                  Start the bot (foreground)");
+	console.log("  start | stop | restart               Manage launchd service");
+	console.log("  status                               Check if service is running");
+	console.log("  logs                                 Tail the log file");
+	console.log("");
+	console.log("Setup:");
+	console.log("  --login                              OAuth login for Anthropic");
+	console.log("  --set-key <provider> <key>           Store an API key");
+	console.log("  --install-skill <owner/repo/skill>   Install a skill from GitHub");
+	console.log("");
+	console.log("Options:");
+	console.log("  --data-dir <path>                    Data directory (default: ~/nv/data)");
 	process.exit(0);
 }
 
