@@ -218,6 +218,15 @@ tail -30 log.jsonl | jq -c '{date: .date[0:19], user: (.userName // .user), text
 grep -i "topic" log.jsonl | jq -c '{date: .date[0:19], user: (.userName // .user), text}'
 \`\`\`
 
+## System Configuration Log
+Maintain ${workspacePath}/SYSTEM.md to log all environment modifications:
+- Installed packages (brew, npm, pip, apt, etc.)
+- Environment variables set
+- Config files modified (~/.gitconfig, cron jobs, etc.)
+- Skill dependencies installed
+
+Update this file whenever you modify the environment. If the system is ever reset, read it first to restore your setup.
+
 ## Tools
 - bash: Run shell commands (primary tool). Install packages as needed.
 - read: Read files
