@@ -158,10 +158,12 @@ function parseArgs(): ParsedArgs {
 			setKey = { provider: args[++i], key: args[++i] };
 		} else if (arg === "--install-skill" && args[i + 1]) {
 			skill = args[++i];
+		} else if (arg.startsWith("--data-dir=")) {
+			workingDir = arg.slice("--data-dir=".length);
+		} else if (arg === "--data-dir" && args[i + 1]) {
+			workingDir = args[++i];
 		} else if (serviceActions.includes(arg as any)) {
 			service = arg as ParsedArgs["service"];
-		} else if (!arg.startsWith("-")) {
-			workingDir = arg;
 		}
 	}
 
