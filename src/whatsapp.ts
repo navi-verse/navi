@@ -367,28 +367,23 @@ export class WhatsAppBot {
 		const mimetype = mimeTypes[ext] || "application/octet-stream";
 
 		if (ext === "gif") {
-			// WhatsApp GIFs must be mp4 with gifPlayback flag
-			// Convert gif to mp4 using ffmpeg
-			const mp4Path = filePath.replace(/\.gif$/i, ".mp4");
+			// WhatsApp requires mp4 for GIF playback
+			let videoData: Buffer;
 			try {
+				const mp4Path = `${filePath}.mp4`;
 				execSync(
-					`ffmpeg -y -i ${shellEscape(filePath)} -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" ${shellEscape(mp4Path)}`,
-					{ stdio: "ignore" },
+					`ffmpeg -y -i ${shellEscape(filePath)} -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -an ${shellEscape(mp4Path)}`,
+					{ stdio: "ignore", timeout: 30000 },
 				);
-				const mp4Data = readFileSync(mp4Path);
-				await this.sock.sendMessage(chatId, {
-					video: mp4Data,
-					gifPlayback: true,
-					mimetype: "video/mp4",
-				});
+				videoData = readFileSync(mp4Path);
 			} catch {
-				// ffmpeg not available, send as document
-				await this.sock.sendMessage(chatId, {
-					document: data,
-					mimetype: "image/gif",
-					fileName,
-				});
+				// ffmpeg failed — try sending raw data (might already be mp4)
+				videoData = data;
 			}
+			await this.sock.sendMessage(chatId, {
+				video: videoData,
+				gifPlayback: true,
+			});
 		} else if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
 			await this.sock.sendMessage(chatId, {
 				image: data,
