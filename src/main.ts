@@ -184,6 +184,10 @@ function createWhatsAppContext(event: WhatsAppEvent, bot: WhatsAppBot, state: Ch
 		sendFile: async (filePath: string, title?: string) => {
 			await bot.sendFile(event.chatId, filePath, title);
 		},
+
+		sendVoice: async (filePath: string) => {
+			await bot.sendVoiceNote(event.chatId, filePath);
+		},
 	};
 }
 

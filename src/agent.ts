@@ -19,7 +19,7 @@ import { join } from "path";
 import { createNvSettingsManager, syncLogToSessionManager } from "./context.js";
 import * as log from "./log.js";
 import type { ChatStore } from "./store.js";
-import { createNvTools, setUploadFunction } from "./tools/index.js";
+import { createNvTools, setSendVoiceFunction, setUploadFunction } from "./tools/index.js";
 import type { WhatsAppContext } from "./whatsapp.js";
 
 const model = getModel("anthropic", "claude-sonnet-4-6");
@@ -226,6 +226,7 @@ grep -i "topic" log.jsonl | jq -c '{date: .date[0:19], user: (.userName // .user
 - attach: Send files via WhatsApp (images, GIFs, videos, audio, documents). Download first with bash if needed.
 - web_search: Search the web for information
 - web_fetch: Fetch and read a web page as markdown
+- tts: Convert text to speech and send as a WhatsApp voice note. Use when asked for voice replies or reading aloud.
 
 Each tool requires a "label" parameter (shown to user).
 `;
@@ -469,6 +470,10 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 
 			setUploadFunction(async (filePath: string, title?: string) => {
 				await ctx.sendFile(filePath, title);
+			});
+
+			setSendVoiceFunction(async (filePath: string) => {
+				await ctx.sendVoice(filePath);
 			});
 
 			// Reset per-run state

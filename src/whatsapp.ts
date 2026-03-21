@@ -45,6 +45,7 @@ export interface WhatsAppContext {
 	respond: (text: string, shouldLog?: boolean) => Promise<void>;
 	setTyping: (isTyping: boolean) => Promise<void>;
 	sendFile: (filePath: string, title?: string) => Promise<void>;
+	sendVoice: (filePath: string) => Promise<void>;
 }
 
 export interface NvHandler {
@@ -149,8 +150,8 @@ export class WhatsAppBot {
 				log.logInfo(`Connection closed (status: ${statusCode}, reason: ${errorMsg})`);
 
 				if (shouldReconnect) {
-					log.logInfo("Reconnecting in 3s...");
-					setTimeout(() => this.connect(), 3000);
+					log.logInfo("Reconnecting...");
+					this.connect();
 				} else {
 					log.logInfo("Logged out. Delete wa-auth/ directory and restart to re-authenticate.");
 				}
@@ -407,6 +408,16 @@ export class WhatsAppBot {
 				fileName,
 			});
 		}
+	}
+
+	async sendVoiceNote(chatId: string, filePath: string): Promise<void> {
+		if (!this.sock) throw new Error("Not connected");
+		const data = readFileSync(filePath);
+		await this.sock.sendMessage(chatId, {
+			audio: data,
+			mimetype: "audio/mpeg",
+			ptt: true,
+		});
 	}
 
 	async sendTyping(chatId: string): Promise<void> {
