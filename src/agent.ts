@@ -22,7 +22,7 @@ import type { ChatStore } from "./store.js";
 import { createNvTools, setUploadFunction } from "./tools/index.js";
 import type { WhatsAppContext } from "./whatsapp.js";
 
-const model = getModel("anthropic", "claude-sonnet-4-5");
+const model = getModel("anthropic", "claude-sonnet-4-6");
 
 export interface AgentRunner {
 	run(ctx: WhatsAppContext, store: ChatStore): Promise<{ stopReason: string; errorMessage?: string }>;
@@ -228,6 +228,13 @@ grep -i "topic" log.jsonl | jq -c '{date: .date[0:19], user: (.userName // .user
 
 Each tool requires a "label" parameter (shown to user).
 `;
+}
+
+function formatTokens(count: number): string {
+	if (count < 1000) return count.toString();
+	if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
+	if (count < 1000000) return `${Math.round(count / 1000)}k`;
+	return `${(count / 1000000).toFixed(1)}M`;
 }
 
 function extractToolResultText(result: unknown): string {
@@ -576,8 +583,12 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 						lastAssistantMessage.usage.cacheWrite
 					: 0;
 				const contextWindow = model.contextWindow || 200000;
+				const pct = ((contextTokens / contextWindow) * 100).toFixed(1);
 
 				log.logUsageSummary(runState.logCtx, runState.totalUsage, contextTokens, contextWindow);
+				log.logInfo(
+					`[${chatId}] Context: ${formatTokens(contextTokens)} / ${formatTokens(contextWindow)} (${pct}%) | Cost: $${runState.totalUsage.cost.total.toFixed(4)}`,
+				);
 			}
 
 			// Clear run state
