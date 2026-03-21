@@ -36,6 +36,8 @@ export interface AgentRunner {
 	run(ctx: WhatsAppContext, store: ChatStore): Promise<{ stopReason: string; errorMessage?: string }>;
 	steer(text: string): void;
 	abort(): void;
+	lastContextTokens: number;
+	contextWindow: number;
 }
 
 async function getAnthropicApiKey(authStorage: AuthStorage): Promise<string> {
@@ -480,7 +482,7 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 		}
 	});
 
-	return {
+	const runner: AgentRunner = {
 		async run(ctx: WhatsAppContext, _store: ChatStore): Promise<{ stopReason: string; errorMessage?: string }> {
 			await mkdir(chatDir, { recursive: true });
 
@@ -645,6 +647,7 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 				log.logInfo(
 					`[${chatId}] Context: ${formatTokens(contextTokens)} / ${formatTokens(contextWindow)} (${pct}%) | Cost: $${runState.totalUsage.cost.total.toFixed(4)}`,
 				);
+				runner.lastContextTokens = contextTokens;
 			}
 
 			// Clear run state
@@ -668,5 +671,10 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 		abort(): void {
 			session.abort();
 		},
+
+		lastContextTokens: 0,
+		contextWindow: model.contextWindow || 1000000,
 	};
+
+	return runner;
 }

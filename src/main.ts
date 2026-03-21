@@ -2,7 +2,7 @@
 
 import { AuthStorage } from "@mariozechner/pi-coding-agent";
 import { execSync } from "child_process";
-import { statSync, unlinkSync } from "fs";
+import { unlinkSync } from "fs";
 import { homedir } from "os";
 import { join, resolve } from "path";
 import { createInterface } from "readline";
@@ -357,26 +357,23 @@ const handler: NvHandler = {
 
 	handleStatus(chatId: string, bot: WhatsAppBot): void {
 		const state = chatStates.get(chatId);
-		const chatDir = join(workingDir, chatId);
-		const contextFile = join(chatDir, "context.jsonl");
-
-		let contextSize = "0";
-		try {
-			const stats = statSync(contextFile);
-			contextSize = `${(stats.size / 1024).toFixed(1)}KB`;
-		} catch {}
 
 		const uptime = process.uptime();
 		const hours = Math.floor(uptime / 3600);
 		const mins = Math.floor((uptime % 3600) / 60);
 
+		const tokens = state?.runner.lastContextTokens || 0;
+		const maxTokens = state?.runner.contextWindow || 1000000;
+		const pct = maxTokens > 0 ? ((tokens / maxTokens) * 100).toFixed(1) : "0";
+		const formatT = (n: number) =>
+			n < 1000 ? `${n}` : n < 1000000 ? `${Math.round(n / 1000)}k` : `${(n / 1000000).toFixed(1)}M`;
+
 		const lines = [
-			`*Navi Status*`,
-			`Running: ${state?.running ? "yes" : "idle"}`,
-			`Uptime: ${hours}h ${mins}m`,
-			`Context: ${contextSize}`,
-			`Tools: 12`,
-			`Model: claude-sonnet-4-6 (1M)`,
+			"*Navi Status* 🧚🏼",
+			`⏱ Uptime: ${hours}h ${mins}m`,
+			`🧠 Context: ${formatT(tokens)} / ${formatT(maxTokens)} (${pct}%)`,
+			`⚡ Status: ${state?.running ? "working" : "idle"}`,
+			`🤖 Model: claude-sonnet-4-6`,
 		];
 		bot.sendMessage(chatId, lines.join("\n"));
 	},
