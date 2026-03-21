@@ -105,12 +105,13 @@ function loadNvSkills(chatDir: string, workspacePath: string): Skill[] {
 }
 
 function getSoul(workspacePath: string): string {
-	const soulPath = join(workspacePath, "SOUL.md");
-	if (existsSync(soulPath)) {
-		try {
-			return readFileSync(soulPath, "utf-8").trim();
-		} catch {
-			return "";
+	// Check data/ first (user customization), then repo root (default)
+	const paths = [join(workspacePath, "SOUL.md"), join(process.cwd(), "SOUL.md")];
+	for (const soulPath of paths) {
+		if (existsSync(soulPath)) {
+			try {
+				return readFileSync(soulPath, "utf-8").trim();
+			} catch {}
 		}
 	}
 	return "";
