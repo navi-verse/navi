@@ -47,6 +47,7 @@ export interface WhatsAppContext {
 export interface NvHandler {
 	isRunning(chatId: string): boolean;
 	handleEvent(event: WhatsAppEvent, bot: WhatsAppBot, isEvent?: boolean): Promise<void>;
+	handleSteer(chatId: string, text: string): void;
 	handleStop(chatId: string, bot: WhatsAppBot): Promise<void>;
 }
 
@@ -234,9 +235,10 @@ export class WhatsAppBot {
 			return;
 		}
 
-		// Check if busy
+		// If busy, steer the running agent with the new message
 		if (this.handler.isRunning(chatId)) {
-			this.sendMessage(chatId, '_Already working. Send "stop" to cancel._');
+			this.handler.handleSteer(chatId, displayText);
+			log.logInfo(`[${chatId}] Steered running agent: ${displayText.substring(0, 50)}`);
 		} else {
 			this.getQueue(chatId).enqueue(() => this.handler.handleEvent(waEvent, this));
 		}

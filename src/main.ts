@@ -197,6 +197,13 @@ const handler: NvHandler = {
 		return state?.running ?? false;
 	},
 
+	handleSteer(chatId: string, text: string): void {
+		const state = chatStates.get(chatId);
+		if (state?.running) {
+			state.runner.steer(text);
+		}
+	},
+
 	async handleStop(chatId: string, bot: WhatsAppBot): Promise<void> {
 		const state = chatStates.get(chatId);
 		if (state?.running) {

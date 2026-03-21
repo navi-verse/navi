@@ -26,6 +26,7 @@ const model = getModel("anthropic", "claude-sonnet-4-5");
 
 export interface AgentRunner {
 	run(ctx: WhatsAppContext, store: ChatStore): Promise<{ stopReason: string; errorMessage?: string }>;
+	steer(text: string): void;
 	abort(): void;
 }
 
@@ -290,6 +291,8 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 		},
 		convertToLlm,
 		getApiKey: async () => getAnthropicApiKey(authStorage),
+		steeringMode: "one-at-a-time",
+		followUpMode: "all",
 	});
 
 	const loadedSession = sessionManager.buildSessionContext();
@@ -582,6 +585,17 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 			runState.logCtx = null;
 
 			return { stopReason: runState.stopReason, errorMessage: runState.errorMessage };
+		},
+
+		steer(text: string): void {
+			const now = new Date();
+			const pad = (n: number) => n.toString().padStart(2, "0");
+			const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+			agent.steer({
+				role: "user",
+				content: [{ type: "text", text: `[${timestamp}] ${text}` }],
+				timestamp: Date.now(),
+			});
 		},
 
 		abort(): void {
