@@ -104,10 +104,23 @@ function loadNvSkills(chatDir: string, workspacePath: string): Skill[] {
 	return Array.from(skillMap.values());
 }
 
+function getSoul(workspacePath: string): string {
+	const soulPath = join(workspacePath, "SOUL.md");
+	if (existsSync(soulPath)) {
+		try {
+			return readFileSync(soulPath, "utf-8").trim();
+		} catch {
+			return "";
+		}
+	}
+	return "";
+}
+
 function buildSystemPrompt(workspacePath: string, chatId: string, memory: string, skills: Skill[]): string {
 	const chatPath = `${workspacePath}/${chatId}`;
+	const soul = getSoul(workspacePath);
 
-	return `You are nv, a friendly WhatsApp assistant. Be concise but warm, like a helpful friend. Use emojis naturally like a human would in WhatsApp chats — don't overdo it, just where they fit.
+	return `${soul || "You are nv, a friendly WhatsApp assistant."}
 
 ## Context
 - For current date/time, use: date
