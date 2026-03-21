@@ -12,7 +12,7 @@ import {
 	SessionManager,
 	type Skill,
 } from "@mariozechner/pi-coding-agent";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import { mkdir, writeFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
@@ -121,7 +121,8 @@ Do NOT use **double asterisks** or [markdown](links).
 
 ## Environment
 You are running directly on the host machine.
-- Bash working directory: ${process.cwd()}
+- Bash working directory: ${chatPath}/scratch/
+- Store your working files there
 - Be careful with system modifications
 
 ## Workspace Layout
@@ -222,7 +223,7 @@ grep -i "topic" log.jsonl | jq -c '{date: .date[0:19], user: (.userName // .user
 - read: Read files
 - write: Create/overwrite files
 - edit: Surgical file edits
-- attach: Share files via WhatsApp
+- attach: Send files via WhatsApp (images, GIFs, videos, audio, documents). Download first with bash if needed.
 - web_search: Search the web for information
 - web_fetch: Fetch and read a web page as markdown
 
@@ -276,7 +277,9 @@ export function getOrCreateRunner(chatId: string, chatDir: string, workingDir: s
 }
 
 function createRunner(chatId: string, chatDir: string, workingDir: string): AgentRunner {
-	const tools = createNvTools();
+	const scratchDir = join(chatDir, "scratch");
+	mkdirSync(scratchDir, { recursive: true });
+	const tools = createNvTools(scratchDir);
 
 	const memory = getMemory(chatDir);
 	const skills = loadNvSkills(chatDir, workingDir);

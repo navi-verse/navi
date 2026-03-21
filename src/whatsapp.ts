@@ -9,10 +9,12 @@ import makeWASocket, {
 	type WAMessage,
 	type WASocket,
 } from "baileys";
+import { execSync } from "child_process";
 import { readFileSync } from "fs";
 import { join } from "path";
 import pino from "pino";
 import qrcode from "qrcode-terminal";
+import { shellEscape } from "./executor.js";
 import * as log from "./log.js";
 import { transcribeAudio } from "./transcribe.js";
 
@@ -345,26 +347,68 @@ export class WhatsAppBot {
 
 		const data = readFileSync(filePath);
 		const fileName = title || filePath.split("/").pop() || "file";
+		const ext = filePath.split(".").pop()?.toLowerCase() || "";
 
-		// Detect mime type by extension
-		const ext = filePath.split(".").pop()?.toLowerCase();
-		const imageExts = ["jpg", "jpeg", "png", "gif", "webp"];
-		const videoExts = ["mp4", "avi", "mov"];
+		const mimeTypes: Record<string, string> = {
+			jpg: "image/jpeg",
+			jpeg: "image/jpeg",
+			png: "image/png",
+			webp: "image/webp",
+			gif: "video/mp4",
+			mp4: "video/mp4",
+			avi: "video/avi",
+			mov: "video/quicktime",
+			mp3: "audio/mpeg",
+			ogg: "audio/ogg",
+			wav: "audio/wav",
+			pdf: "application/pdf",
+		};
 
-		if (ext && imageExts.includes(ext)) {
+		const mimetype = mimeTypes[ext] || "application/octet-stream";
+
+		if (ext === "gif") {
+			// WhatsApp GIFs must be mp4 with gifPlayback flag
+			// Convert gif to mp4 using ffmpeg
+			const mp4Path = filePath.replace(/\.gif$/i, ".mp4");
+			try {
+				execSync(
+					`ffmpeg -y -i ${shellEscape(filePath)} -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" ${shellEscape(mp4Path)}`,
+					{ stdio: "ignore" },
+				);
+				const mp4Data = readFileSync(mp4Path);
+				await this.sock.sendMessage(chatId, {
+					video: mp4Data,
+					gifPlayback: true,
+					mimetype: "video/mp4",
+				});
+			} catch {
+				// ffmpeg not available, send as document
+				await this.sock.sendMessage(chatId, {
+					document: data,
+					mimetype: "image/gif",
+					fileName,
+				});
+			}
+		} else if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
 			await this.sock.sendMessage(chatId, {
 				image: data,
-				caption: fileName,
+				mimetype,
 			});
-		} else if (ext && videoExts.includes(ext)) {
+		} else if (["mp4", "avi", "mov"].includes(ext)) {
 			await this.sock.sendMessage(chatId, {
 				video: data,
-				caption: fileName,
+				mimetype,
+			});
+		} else if (["mp3", "ogg", "wav"].includes(ext)) {
+			await this.sock.sendMessage(chatId, {
+				audio: data,
+				mimetype,
+				ptt: ext === "ogg",
 			});
 		} else {
 			await this.sock.sendMessage(chatId, {
 				document: data,
-				mimetype: "application/octet-stream",
+				mimetype,
 				fileName,
 			});
 		}

@@ -23,7 +23,7 @@ interface BashToolDetails {
 	fullOutputPath?: string;
 }
 
-export function createBashTool(): AgentTool<typeof bashSchema> {
+export function createBashTool(cwd?: string): AgentTool<typeof bashSchema> {
 	return {
 		name: "bash",
 		label: "bash",
@@ -36,7 +36,7 @@ export function createBashTool(): AgentTool<typeof bashSchema> {
 		) => {
 			let tempFilePath: string | undefined;
 
-			const result = await exec(command, { timeout, signal });
+			const result = await exec(command, { timeout, signal, cwd });
 			let output = "";
 			if (result.stdout) output += result.stdout;
 			if (result.stderr) {

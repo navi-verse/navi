@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 export interface ExecOptions {
 	timeout?: number;
 	signal?: AbortSignal;
+	cwd?: string;
 }
 
 export interface ExecResult {
@@ -22,6 +23,7 @@ export function exec(command: string, options?: ExecOptions): Promise<ExecResult
 		const child = spawn(shell, [...shellArgs, command], {
 			detached: true,
 			stdio: ["ignore", "pipe", "pipe"],
+			cwd: options?.cwd,
 		});
 
 		let stdout = "";

@@ -17,7 +17,8 @@ const attachSchema = Type.Object({
 export const attachTool: AgentTool<typeof attachSchema> = {
 	name: "attach",
 	label: "attach",
-	description: "Attach a file to your response. Use this to share files, images, or documents with the user.",
+	description:
+		"Send a file to the user via WhatsApp. Supports images (jpg, png, webp), GIFs (gif), videos (mp4, mov), audio (mp3, ogg, wav), PDFs, and any other file type. Use bash to download files first (e.g. curl -o file.gif URL), then attach them.",
 	parameters: attachSchema,
 	execute: async (
 		_toolCallId: string,

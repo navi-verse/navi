@@ -8,10 +8,10 @@ import { createWriteTool } from "./write.js";
 
 export { setUploadFunction } from "./attach.js";
 
-export function createNvTools(): AgentTool<any>[] {
+export function createNvTools(scratchDir?: string): AgentTool<any>[] {
 	return [
 		createReadTool(),
-		createBashTool(),
+		createBashTool(scratchDir),
 		createEditTool(),
 		createWriteTool(),
 		attachTool,
