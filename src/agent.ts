@@ -319,7 +319,7 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 		initialState: {
 			systemPrompt,
 			model,
-			thinkingLevel: "off",
+			thinkingLevel: "medium",
 			tools,
 		},
 		convertToLlm,
