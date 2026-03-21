@@ -10,7 +10,7 @@ import makeWASocket, {
 	type WASocket,
 } from "baileys";
 import { execSync } from "child_process";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import pino from "pino";
 import qrcode from "qrcode-terminal";
@@ -167,21 +167,31 @@ export class WhatsAppBot {
 		});
 	}
 
+	private isAllowed(jid: string): boolean {
+		const allowlistPath = join(this.workingDir, "allowlist.json");
+		if (!existsSync(allowlistPath)) return true;
+		try {
+			const data = JSON.parse(readFileSync(allowlistPath, "utf-8")) as Record<string, string>;
+			return Object.values(data).includes(jid);
+		} catch {
+			return true;
+		}
+	}
+
 	private async handleMessage(msg: WAMessage): Promise<void> {
 		if (!msg.message || !msg.key.remoteJid) return;
 
 		// Skip own messages
 		if (msg.key.fromMe) return;
 
-		// Mark as read (blue ticks)
-		try {
-			await this.sock!.readMessages([msg.key]);
-		} catch {
-			// Ignore read receipt errors
-		}
-
 		const chatId = msg.key.remoteJid;
 		const isGroup = chatId.endsWith("@g.us");
+
+		// Check allowlist (by chat JID for DMs, by participant for groups)
+		const sender = isGroup ? msg.key.participant || "" : chatId;
+		if (!this.isAllowed(chatId) && !this.isAllowed(sender)) return;
+
+		// Mark as read (blue ticks)
 		const ts = ((msg.messageTimestamp as number) || Math.floor(Date.now() / 1000)).toString();
 		const pushName =
 			msg.pushName || (isGroup ? msg.key.participant || chatId : chatId.replace("@s.whatsapp.net", ""));
