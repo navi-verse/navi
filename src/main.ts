@@ -61,10 +61,50 @@ function setApiKey(provider: string, key: string): void {
 	console.log(`Saved ${provider} API key to ~/.nv/auth.json`);
 }
 
+async function installSkill(ref: string, dataDir: string): Promise<void> {
+	// Format: owner/repo/skill-name
+	const parts = ref.split("/");
+	if (parts.length !== 3) {
+		console.error("Format: owner/repo/skill-name (e.g. navi-verse/navi-skills/reminders)");
+		process.exit(1);
+	}
+	const [owner, repo, skillName] = parts;
+	const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/skills/${skillName}`;
+
+	console.log(`Installing skill "${skillName}" from ${owner}/${repo}...`);
+
+	const response = await fetch(apiBase);
+	if (!response.ok) {
+		console.error(`Failed to fetch skill: ${response.status} ${response.statusText}`);
+		process.exit(1);
+	}
+
+	const files = (await response.json()) as Array<{ name: string; download_url: string; type: string }>;
+
+	const skillDir = join(dataDir, "skills", skillName);
+	const { mkdirSync, writeFileSync } = await import("fs");
+	mkdirSync(skillDir, { recursive: true });
+
+	for (const file of files) {
+		if (file.type !== "file" || !file.download_url) continue;
+		const fileResponse = await fetch(file.download_url);
+		if (!fileResponse.ok) {
+			console.error(`Failed to download ${file.name}`);
+			continue;
+		}
+		const content = await fileResponse.text();
+		writeFileSync(join(skillDir, file.name), content);
+		console.log(`  ${file.name}`);
+	}
+
+	console.log(`Skill "${skillName}" installed to ${skillDir}`);
+}
+
 interface ParsedArgs {
 	workingDir?: string;
 	login?: boolean;
 	setKey?: { provider: string; key: string };
+	installSkill?: string;
 }
 
 function parseArgs(): ParsedArgs {
@@ -72,6 +112,7 @@ function parseArgs(): ParsedArgs {
 	let workingDir: string | undefined;
 	let login = false;
 	let setKey: { provider: string; key: string } | undefined;
+	let skill: string | undefined;
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
@@ -79,6 +120,8 @@ function parseArgs(): ParsedArgs {
 			login = true;
 		} else if (arg === "--set-key" && args[i + 1] && args[i + 2]) {
 			setKey = { provider: args[++i], key: args[++i] };
+		} else if (arg === "--install-skill" && args[i + 1]) {
+			skill = args[++i];
 		} else if (!arg.startsWith("-")) {
 			workingDir = arg;
 		}
@@ -88,6 +131,7 @@ function parseArgs(): ParsedArgs {
 		workingDir: workingDir ? resolve(workingDir) : undefined,
 		login,
 		setKey,
+		installSkill: skill,
 	};
 }
 
@@ -103,10 +147,17 @@ if (parsedArgs.setKey) {
 	process.exit(0);
 }
 
+if (parsedArgs.installSkill) {
+	const dataDir = parsedArgs.workingDir || resolve("./data");
+	await installSkill(parsedArgs.installSkill, dataDir);
+	process.exit(0);
+}
+
 if (!parsedArgs.workingDir) {
 	console.error("Usage: nv <working-directory>");
-	console.error("       nv --login                          OAuth login for Anthropic");
-	console.error("       nv --set-key <provider> <key>       Store an API key (e.g. brave)");
+	console.error("       nv --login                              OAuth login for Anthropic");
+	console.error("       nv --set-key <provider> <key>           Store an API key");
+	console.error("       nv --install-skill <owner/repo/skill>   Install a skill from GitHub");
 	process.exit(1);
 }
 
