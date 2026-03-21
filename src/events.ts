@@ -315,6 +315,7 @@ export class EventsWatcher {
 			ts: Date.now().toString(),
 			user: "EVENT",
 			text: message,
+			messageId: "",
 			attachments: [],
 		};
 

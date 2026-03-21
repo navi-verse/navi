@@ -295,6 +295,22 @@ function createWhatsAppContext(event: WhatsAppEvent, bot: WhatsAppBot, state: Ch
 		sendVoice: async (filePath: string) => {
 			await bot.sendVoiceNote(event.chatId, filePath);
 		},
+
+		react: async (emoji: string) => {
+			await bot.reactToMessage(event.chatId, event.messageId, emoji);
+		},
+
+		reply: async (messageId: string, text: string) => {
+			await bot.replyToMessage(event.chatId, messageId, text);
+		},
+
+		sendLocation: async (lat: number, lng: number, name?: string) => {
+			await bot.sendLocation(event.chatId, lat, lng, name);
+		},
+
+		sendContact: async (name: string, phone: string) => {
+			await bot.sendContact(event.chatId, name, phone);
+		},
 	};
 }
 

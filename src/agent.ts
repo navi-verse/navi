@@ -19,7 +19,15 @@ import { join } from "path";
 import { createNvSettingsManager, syncLogToSessionManager } from "./context.js";
 import * as log from "./log.js";
 import type { ChatStore } from "./store.js";
-import { createNvTools, setSendVoiceFunction, setUploadFunction } from "./tools/index.js";
+import {
+	createNvTools,
+	setReactFunction,
+	setReplyFunction,
+	setSendContactFunction,
+	setSendLocationFunction,
+	setSendVoiceFunction,
+	setUploadFunction,
+} from "./tools/index.js";
 import type { WhatsAppContext } from "./whatsapp.js";
 
 const model = getModel("anthropic", "claude-sonnet-4-6");
@@ -247,6 +255,10 @@ Update this file whenever you modify the environment. If the system is ever rese
 - web_search: Search the web for information
 - web_fetch: Fetch and read a web page as markdown
 - tts: Convert text to speech and send as a WhatsApp voice note. Use when asked for voice replies or reading aloud.
+- react: React to the current message with an emoji. Use sparingly.
+- reply: Reply to a specific message (quoted reply). Use when answering multiple questions in separate bubbles.
+- send_location: Send a location pin.
+- send_contact: Send a contact card.
 
 Each tool requires a "label" parameter (shown to user).
 `;
@@ -494,6 +506,22 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 
 			setSendVoiceFunction(async (filePath: string) => {
 				await ctx.sendVoice(filePath);
+			});
+
+			setReactFunction(async (emoji: string) => {
+				await ctx.react(emoji);
+			});
+
+			setReplyFunction(async (messageId: string, text: string) => {
+				await ctx.reply(messageId, text);
+			});
+
+			setSendLocationFunction(async (lat: number, lng: number, name?: string) => {
+				await ctx.sendLocation(lat, lng, name);
+			});
+
+			setSendContactFunction(async (name: string, phone: string) => {
+				await ctx.sendContact(name, phone);
 			});
 
 			// Reset per-run state

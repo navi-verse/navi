@@ -31,6 +31,7 @@ export interface WhatsAppEvent {
 	ts: string;
 	user: string;
 	text: string;
+	messageId: string;
 	attachments: Array<{ local: string }>;
 }
 
@@ -46,6 +47,10 @@ export interface WhatsAppContext {
 	setTyping: (isTyping: boolean) => Promise<void>;
 	sendFile: (filePath: string, title?: string) => Promise<void>;
 	sendVoice: (filePath: string) => Promise<void>;
+	react: (emoji: string) => Promise<void>;
+	reply: (messageId: string, text: string) => Promise<void>;
+	sendLocation: (lat: number, lng: number, name?: string) => Promise<void>;
+	sendContact: (name: string, phone: string) => Promise<void>;
 }
 
 export interface NvHandler {
@@ -123,7 +128,7 @@ export class WhatsAppBot {
 			},
 			browser: Browsers.macOS("Chrome"),
 			logger: waLogger as any,
-			generateHighQualityLinkPreview: false,
+			generateHighQualityLinkPreview: true,
 		});
 
 		this.sock = sock;
@@ -237,6 +242,7 @@ export class WhatsAppBot {
 			ts,
 			user: pushName,
 			text: displayText,
+			messageId: msg.key.id || "",
 			attachments,
 		};
 
@@ -351,6 +357,38 @@ export class WhatsAppBot {
 		if (!this.sock) throw new Error("Not connected");
 		const result = await this.sock.sendMessage(chatId, { text });
 		return result?.key.id || Date.now().toString();
+	}
+
+	async reactToMessage(chatId: string, messageId: string, emoji: string): Promise<void> {
+		if (!this.sock) throw new Error("Not connected");
+		await this.sock.sendMessage(chatId, {
+			react: { text: emoji, key: { remoteJid: chatId, id: messageId } },
+		});
+	}
+
+	async replyToMessage(chatId: string, messageId: string, text: string): Promise<string> {
+		if (!this.sock) throw new Error("Not connected");
+		const result = await this.sock.sendMessage(
+			chatId,
+			{ text },
+			{ quoted: { key: { remoteJid: chatId, id: messageId }, message: {} } as any },
+		);
+		return result?.key.id || Date.now().toString();
+	}
+
+	async sendLocation(chatId: string, lat: number, lng: number, name?: string): Promise<void> {
+		if (!this.sock) throw new Error("Not connected");
+		await this.sock.sendMessage(chatId, {
+			location: { degreesLatitude: lat, degreesLongitude: lng, name: name || undefined },
+		});
+	}
+
+	async sendContact(chatId: string, name: string, phone: string): Promise<void> {
+		if (!this.sock) throw new Error("Not connected");
+		const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;type=CELL;type=VOICE;waid=${phone.replace(/\+/g, "")}:${phone}\nEND:VCARD`;
+		await this.sock.sendMessage(chatId, {
+			contacts: { contacts: [{ displayName: name, vcard }] },
+		});
 	}
 
 	async sendFile(chatId: string, filePath: string, title?: string): Promise<void> {
