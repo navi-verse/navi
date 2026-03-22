@@ -11,7 +11,8 @@ import {
 	SlashCommandBuilder,
 	type ThreadChannel,
 } from "discord.js";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 import * as log from "./log.js";
 import type { ChatStore } from "./store.js";
 
@@ -126,6 +127,7 @@ export class DiscordBot {
 		this.client.once(Events.ClientReady, async (c) => {
 			log.logInfo(`Discord connected as ${c.user.tag}`);
 			await this.registerSlashCommands(config.token, c.user.id);
+			await this.backfillChannels();
 		});
 
 		this.client.login(config.token);
@@ -535,6 +537,65 @@ export class DiscordBot {
 		const channel = this.client.channels.cache.get(channelId);
 		if (channel && "name" in channel) return channel.name as string;
 		return undefined;
+	}
+
+	/**
+	 * Backfill missed messages from channels that have existing log.jsonl files.
+	 * Only fetches messages newer than the last logged timestamp.
+	 */
+	private async backfillChannels(): Promise<void> {
+		const startTime = Date.now();
+		let totalMessages = 0;
+
+		for (const [, guild] of this.client.guilds.cache) {
+			for (const [, channel] of guild.channels.cache) {
+				if (!channel.isTextBased() || !("messages" in channel)) continue;
+
+				const chatId = `discord:${channel.id}`;
+				const logPath = join(this.workingDir, chatId, "log.jsonl");
+				if (!existsSync(logPath)) continue;
+
+				// Find last logged timestamp
+				const lastTs = this.store.getLastTimestamp(chatId);
+				if (!lastTs) continue;
+
+				try {
+					const messages = await channel.messages.fetch({ limit: 100, after: lastTs });
+					let count = 0;
+
+					// Sort chronologically
+					const sorted = [...messages.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+					for (const msg of sorted) {
+						if (msg.author.bot) continue;
+
+						const user = msg.author.displayName || msg.author.username;
+						this.store.logToFileSync(chatId, {
+							date: new Date(msg.createdTimestamp).toISOString(),
+							ts: msg.createdTimestamp.toString(),
+							user: msg.author.id,
+							userName: user,
+							text: msg.content || "(media)",
+							attachments: [],
+							isBot: false,
+						});
+						count++;
+					}
+
+					if (count > 0) {
+						log.logInfo(`Backfilled #${channel.name}: ${count} messages`);
+						totalMessages += count;
+					}
+				} catch {
+					// Skip channels we can't read
+				}
+			}
+		}
+
+		const durationMs = Date.now() - startTime;
+		if (totalMessages > 0) {
+			log.logInfo(`Backfill complete: ${totalMessages} messages in ${(durationMs / 1000).toFixed(1)}s`);
+		}
 	}
 
 	enqueueEvent(event: DiscordEvent): boolean {
