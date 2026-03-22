@@ -255,13 +255,6 @@ Each tool requires a "label" parameter (shown to user).
 `;
 }
 
-function formatTokens(count: number): string {
-	if (count < 1000) return count.toString();
-	if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
-	if (count < 1000000) return `${Math.round(count / 1000)}k`;
-	return `${(count / 1000000).toFixed(1)}M`;
-}
-
 function extractToolResultText(result: unknown): string {
 	if (typeof result === "string") {
 		return result;
@@ -669,7 +662,7 @@ function createRunner(
 
 				log.logUsageSummary(runState.logCtx, runState.totalUsage, contextTokens, contextWindow);
 				log.logInfo(
-					`[${chatId}] Context: ${formatTokens(contextTokens)} / ${formatTokens(contextWindow)} (${pct}%) | Cost: $${runState.totalUsage.cost.total.toFixed(4)}`,
+					`[${chatId}] Context: ${log.formatTokens(contextTokens)} / ${log.formatTokens(contextWindow)} (${pct}%) | Cost: $${runState.totalUsage.cost.total.toFixed(4)}`,
 				);
 				runner.lastContextTokens = contextTokens;
 			}

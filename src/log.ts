@@ -133,6 +133,13 @@ export function logWarning(message: string, details?: string): void {
 	}
 }
 
+export function formatTokens(count: number): string {
+	if (count < 1000) return count.toString();
+	if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
+	if (count < 1000000) return `${Math.round(count / 1000)}k`;
+	return `${(count / 1000000).toFixed(1)}M`;
+}
+
 export function logUsageSummary(
 	ctx: LogContext,
 	usage: {
@@ -145,13 +152,6 @@ export function logUsageSummary(
 	contextTokens?: number,
 	contextWindow?: number,
 ): string {
-	const formatTokens = (count: number): string => {
-		if (count < 1000) return count.toString();
-		if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
-		if (count < 1000000) return `${Math.round(count / 1000)}k`;
-		return `${(count / 1000000).toFixed(1)}M`;
-	};
-
 	const lines: string[] = [];
 	lines.push("Usage Summary");
 	lines.push(`Tokens: ${usage.input.toLocaleString()} in, ${usage.output.toLocaleString()} out`);
