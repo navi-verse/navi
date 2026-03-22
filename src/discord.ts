@@ -1,4 +1,12 @@
-import { Client, Events, GatewayIntentBits, type Message, Partials, type ThreadChannel } from "discord.js";
+import {
+	Client,
+	EmbedBuilder,
+	Events,
+	GatewayIntentBits,
+	type Message,
+	Partials,
+	type ThreadChannel,
+} from "discord.js";
 import { readFileSync } from "fs";
 import * as log from "./log.js";
 import type { ChatStore } from "./store.js";
@@ -272,6 +280,75 @@ export class DiscordBot {
 
 	clearBotMessage(chatId: string): void {
 		this.botMessages.delete(chatId);
+	}
+
+	/**
+	 * Send a rich embed (colored card with fields).
+	 * Used for /status, search results, tool summaries.
+	 */
+	async sendEmbed(
+		chatId: string,
+		options: {
+			title: string;
+			description?: string;
+			color?: number;
+			fields?: Array<{ name: string; value: string; inline?: boolean }>;
+			footer?: string;
+		},
+	): Promise<string> {
+		const channelId = chatId.replace("discord:", "");
+		const channel = await this.client.channels.fetch(channelId);
+		if (!channel?.isTextBased() || !("send" in channel)) throw new Error("Not a text channel");
+
+		const embed = new EmbedBuilder().setTitle(options.title).setColor(options.color ?? 0x7c3aed);
+
+		if (options.description) embed.setDescription(options.description);
+		if (options.fields) {
+			for (const field of options.fields) {
+				embed.addFields({ name: field.name, value: field.value, inline: field.inline ?? false });
+			}
+		}
+		if (options.footer) embed.setFooter({ text: options.footer });
+
+		const sent = await channel.send({ embeds: [embed] });
+		return sent.id;
+	}
+
+	/**
+	 * Send a usage summary embed to a thread.
+	 */
+	async sendUsageEmbed(
+		chatId: string,
+		usage: { input: number; output: number; cacheRead: number; cacheWrite: number; cost: { total: number } },
+		contextTokens: number,
+		contextWindow: number,
+	): Promise<void> {
+		const thread = this.activeThreads.get(chatId);
+		if (!thread) return;
+
+		const pct = ((contextTokens / contextWindow) * 100).toFixed(1);
+		const embed = new EmbedBuilder()
+			.setTitle("Usage")
+			.setColor(0x22c55e)
+			.addFields(
+				{
+					name: "Tokens",
+					value: `${usage.input.toLocaleString()} in / ${usage.output.toLocaleString()} out`,
+					inline: true,
+				},
+				{ name: "Context", value: `${pct}%`, inline: true },
+				{ name: "Cost", value: `$${usage.cost.total.toFixed(4)}`, inline: true },
+			);
+
+		if (usage.cacheRead > 0 || usage.cacheWrite > 0) {
+			embed.addFields({
+				name: "Cache",
+				value: `${usage.cacheRead.toLocaleString()} read / ${usage.cacheWrite.toLocaleString()} write`,
+				inline: true,
+			});
+		}
+
+		await thread.send({ embeds: [embed] });
 	}
 
 	async sendFile(chatId: string, filePath: string, _title?: string): Promise<void> {
