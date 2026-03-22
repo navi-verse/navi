@@ -2,7 +2,7 @@
 
 import { AuthStorage } from "@mariozechner/pi-coding-agent";
 import { execSync } from "child_process";
-import { unlinkSync } from "fs";
+import { existsSync, unlinkSync } from "fs";
 import { homedir } from "os";
 import { join, resolve } from "path";
 import { createInterface } from "readline";
@@ -10,6 +10,7 @@ import { type AgentRunner, getOrCreateRunner, resetRunner } from "./agent.js";
 import { createEventsWatcher } from "./events.js";
 import * as log from "./log.js";
 import {
+	clearChatModelConfig,
 	formatModelName,
 	loadModelConfig,
 	type ModelConfig,
@@ -311,7 +312,7 @@ function getState(chatId: string, modelConfig?: ModelConfig): ChatState {
 	let state = chatStates.get(chatId);
 	if (!state) {
 		const chatDir = join(workingDir, chatId);
-		const config = modelConfig || loadModelConfig();
+		const config = modelConfig || loadModelConfig(chatDir);
 		const model = resolveModel(config.primary);
 		state = {
 			running: false,
@@ -454,7 +455,8 @@ const handler: NvHandler = {
 
 		const messages = state?.runner.lastMessageCount || 0;
 
-		const config = loadModelConfig();
+		const chatDir = join(workingDir, chatId);
+		const config = loadModelConfig(chatDir);
 		const modelName = state?.runner.modelInfo
 			? formatModelName(state.runner.modelInfo)
 			: formatModelName(config.primary);
@@ -473,19 +475,35 @@ const handler: NvHandler = {
 	},
 
 	handleModel(chatId: string, bot: WhatsAppBot, args?: string): void {
-		const config = loadModelConfig();
+		const chatDir = join(workingDir, chatId);
+		const chatConfig = loadModelConfig(chatDir);
+		const globalConfig = loadModelConfig();
 
 		if (!args) {
+			const isCustom = existsSync(join(chatDir, "model.json"));
 			const lines = [
 				"*Current Model*",
-				`🤖 Primary: ${formatModelName(config.primary)}`,
-				`🔄 Fallback: ${config.fallback ? formatModelName(config.fallback) : "none"}`,
+				`🤖 Primary: ${formatModelName(chatConfig.primary)}${isCustom ? " (this chat)" : " (global)"}`,
+				`🔄 Fallback: ${chatConfig.fallback ? formatModelName(chatConfig.fallback) : "none"}`,
 				"",
-				"Use /model provider/model to switch",
-				"Use /model fallback provider/model to set fallback",
-				"Use /model fallback none to remove fallback",
+				"/model provider/model — switch this chat",
+				"/model global provider/model — switch all chats",
+				"/model reset — use global default",
+				"/model fallback provider/model — set fallback",
 			];
 			bot.sendMessage(chatId, lines.join("\n"));
+			return;
+		}
+
+		// Reset to global
+		if (args === "reset") {
+			if (clearChatModelConfig(chatDir)) {
+				resetRunner(chatId);
+				chatStates.delete(chatId);
+				bot.sendMessage(chatId, `Reset to global: ${formatModelName(globalConfig.primary)}`);
+			} else {
+				bot.sendMessage(chatId, "Already using global default.");
+			}
 			return;
 		}
 
@@ -493,8 +511,8 @@ const handler: NvHandler = {
 		if (args.startsWith("fallback ")) {
 			const fallbackArg = args.substring(9).trim();
 			if (fallbackArg === "none") {
-				config.fallback = undefined;
-				saveModelConfig(config);
+				chatConfig.fallback = undefined;
+				saveModelConfig(chatConfig, chatDir);
 				bot.sendMessage(chatId, "Fallback removed.");
 			} else {
 				const parts = fallbackArg.split("/");
@@ -504,8 +522,8 @@ const handler: NvHandler = {
 				}
 				try {
 					resolveModel({ provider: parts[0], model: parts[1] });
-					config.fallback = { provider: parts[0], model: parts[1] };
-					saveModelConfig(config);
+					chatConfig.fallback = { provider: parts[0], model: parts[1] };
+					saveModelConfig(chatConfig, chatDir);
 					bot.sendMessage(chatId, `Fallback set to ${fallbackArg}`);
 				} catch {
 					bot.sendMessage(chatId, `Unknown model: ${fallbackArg}`);
@@ -514,7 +532,30 @@ const handler: NvHandler = {
 			return;
 		}
 
-		// Switch primary model
+		// Global model switch
+		if (args.startsWith("global ")) {
+			const modelArg = args.substring(7).trim();
+			const parts = modelArg.split("/");
+			if (parts.length !== 2) {
+				bot.sendMessage(chatId, "Format: /model global provider/model");
+				return;
+			}
+			try {
+				resolveModel({ provider: parts[0], model: parts[1] });
+				globalConfig.primary = { provider: parts[0], model: parts[1] };
+				saveModelConfig(globalConfig);
+				for (const [id] of chatStates) {
+					resetRunner(id);
+				}
+				chatStates.clear();
+				bot.sendMessage(chatId, `Global model switched to ${modelArg}`);
+			} catch {
+				bot.sendMessage(chatId, `Unknown model: ${modelArg}`);
+			}
+			return;
+		}
+
+		// Per-chat model switch
 		const parts = args.split("/");
 		if (parts.length !== 2) {
 			bot.sendMessage(chatId, "Format: /model provider/model");
@@ -522,14 +563,14 @@ const handler: NvHandler = {
 		}
 		try {
 			resolveModel({ provider: parts[0], model: parts[1] });
-			config.primary = { provider: parts[0], model: parts[1] };
-			saveModelConfig(config);
-			// Reset all runners so they pick up the new model
-			for (const [id] of chatStates) {
-				resetRunner(id);
-			}
-			chatStates.clear();
-			bot.sendMessage(chatId, `Model switched to ${args}`);
+			const newConfig: ModelConfig = {
+				primary: { provider: parts[0], model: parts[1] },
+				fallback: chatConfig.fallback,
+			};
+			saveModelConfig(newConfig, chatDir);
+			resetRunner(chatId);
+			chatStates.delete(chatId);
+			bot.sendMessage(chatId, `This chat switched to ${args}`);
 		} catch {
 			bot.sendMessage(chatId, `Unknown model: ${args}`);
 		}

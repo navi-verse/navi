@@ -1,5 +1,5 @@
 import { getModel } from "@mariozechner/pi-ai";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import { dirname, join } from "path";
 
@@ -19,7 +19,18 @@ const DEFAULT_CONFIG: ModelConfig = {
 	primary: { provider: "anthropic", model: "claude-sonnet-4-6" },
 };
 
-export function loadModelConfig(): ModelConfig {
+export function loadModelConfig(chatDir?: string): ModelConfig {
+	// Per-chat override takes priority
+	if (chatDir) {
+		const chatConfigPath = join(chatDir, "model.json");
+		if (existsSync(chatConfigPath)) {
+			try {
+				const data = JSON.parse(readFileSync(chatConfigPath, "utf-8")) as ModelConfig;
+				if (data.primary?.provider && data.primary?.model) return data;
+			} catch {}
+		}
+	}
+	// Fall back to global
 	if (!existsSync(CONFIG_PATH)) return DEFAULT_CONFIG;
 	try {
 		const data = JSON.parse(readFileSync(CONFIG_PATH, "utf-8")) as ModelConfig;
@@ -30,10 +41,20 @@ export function loadModelConfig(): ModelConfig {
 	}
 }
 
-export function saveModelConfig(config: ModelConfig): void {
-	const dir = dirname(CONFIG_PATH);
+export function saveModelConfig(config: ModelConfig, chatDir?: string): void {
+	const path = chatDir ? join(chatDir, "model.json") : CONFIG_PATH;
+	const dir = dirname(path);
 	if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-	writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+	writeFileSync(path, JSON.stringify(config, null, 2));
+}
+
+export function clearChatModelConfig(chatDir: string): boolean {
+	const chatConfigPath = join(chatDir, "model.json");
+	if (existsSync(chatConfigPath)) {
+		unlinkSync(chatConfigPath);
+		return true;
+	}
+	return false;
 }
 
 export function resolveModel(entry: ModelEntry): any {
