@@ -221,6 +221,22 @@ if (!parsedArgs.service) {
 const { workingDir } = { workingDir: parsedArgs.workingDir };
 
 // ============================================================================
+// Auth check
+// ============================================================================
+
+{
+	const authStorage = AuthStorage.create(join(homedir(), ".nv", "auth.json"));
+	const hasAuth = authStorage.hasAuth("anthropic");
+	if (!hasAuth) {
+		console.error("No Anthropic credentials found.");
+		console.error("");
+		console.error("  nv --login                  OAuth login (uses Claude subscription)");
+		console.error("  nv --set-key anthropic <key> API key from console.anthropic.com");
+		process.exit(1);
+	}
+}
+
+// ============================================================================
 // State (per chat)
 // ============================================================================
 
@@ -419,7 +435,12 @@ const handler: NvHandler = {
 				await bot.sendMessage(event.chatId, "_Stopped_");
 			}
 		} catch (err) {
-			log.logWarning(`[${event.chatId}] Run error`, err instanceof Error ? err.message : String(err));
+			const errMsg = err instanceof Error ? err.message : String(err);
+			log.logWarning(`[${event.chatId}] Run error`, errMsg);
+
+			if (errMsg.includes("Authentication failed") || errMsg.includes("No API key") || errMsg.includes("expired")) {
+				await bot.sendMessage(event.chatId, "Auth expired. Run `nv --login` on the host to re-authenticate.");
+			}
 		} finally {
 			state.running = false;
 		}
