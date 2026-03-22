@@ -3,8 +3,12 @@ import {
 	EmbedBuilder,
 	Events,
 	GatewayIntentBits,
+	type Interaction,
 	type Message,
 	Partials,
+	REST,
+	Routes,
+	SlashCommandBuilder,
 	type ThreadChannel,
 } from "discord.js";
 import { readFileSync } from "fs";
@@ -117,12 +121,69 @@ export class DiscordBot {
 		});
 
 		this.client.on(Events.MessageCreate, (msg) => this.handleMessage(msg));
+		this.client.on(Events.InteractionCreate, (i) => this.handleInteraction(i));
 
-		this.client.once(Events.ClientReady, (c) => {
+		this.client.once(Events.ClientReady, async (c) => {
 			log.logInfo(`Discord connected as ${c.user.tag}`);
+			await this.registerSlashCommands(config.token, c.user.id);
 		});
 
 		this.client.login(config.token);
+	}
+
+	private async registerSlashCommands(token: string, clientId: string): Promise<void> {
+		const commands = [
+			new SlashCommandBuilder().setName("new").setDescription("Start a fresh conversation"),
+			new SlashCommandBuilder().setName("status").setDescription("Show bot status"),
+			new SlashCommandBuilder().setName("help").setDescription("Show available commands"),
+			new SlashCommandBuilder()
+				.setName("model")
+				.setDescription("Show or switch the current model")
+				.addStringOption((opt) =>
+					opt
+						.setName("name")
+						.setDescription("provider/model (e.g. anthropic/claude-sonnet-4-6)")
+						.setRequired(false),
+				),
+		];
+
+		const rest = new REST().setToken(token);
+		try {
+			await rest.put(Routes.applicationCommands(clientId), { body: commands.map((c) => c.toJSON()) });
+			log.logInfo("Discord slash commands registered");
+		} catch (err) {
+			log.logWarning("Failed to register slash commands", err instanceof Error ? err.message : String(err));
+		}
+	}
+
+	private async handleInteraction(interaction: Interaction): Promise<void> {
+		if (!interaction.isChatInputCommand()) return;
+
+		const chatId = `discord:${interaction.channelId}`;
+
+		switch (interaction.commandName) {
+			case "new":
+				await interaction.reply("_Context cleared. Fresh start._");
+				this.handler.handleNew(chatId, this);
+				break;
+			case "status":
+				await interaction.deferReply();
+				this.handler.handleStatus(chatId, this);
+				await interaction.deleteReply();
+				break;
+			case "help":
+				await interaction.deferReply();
+				this.handler.handleHelp(chatId, this);
+				await interaction.deleteReply();
+				break;
+			case "model": {
+				const name = interaction.options.getString("name") || undefined;
+				await interaction.deferReply();
+				this.handler.handleModel(chatId, this, name);
+				await interaction.deleteReply();
+				break;
+			}
+		}
 	}
 
 	private async handleMessage(msg: Message): Promise<void> {
