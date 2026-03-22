@@ -400,6 +400,7 @@ function createRunner(
 		},
 		stopReason: "stop",
 		errorMessage: undefined as string | undefined,
+		responseSent: false,
 	};
 
 	// Subscribe to events ONCE
@@ -480,6 +481,12 @@ function createRunner(
 				const text = textParts.join("\n");
 				if (text.trim()) {
 					log.logResponse(logCtx, text);
+
+					// Send text immediately — don't wait for tools to finish
+					if (runState.ctx && text.trim() !== "[SILENT]" && !text.trim().startsWith("[SILENT]")) {
+						runState.ctx.respond(text).catch(() => {});
+						runState.responseSent = true;
+					}
 				}
 			}
 		} else if (event.type === "auto_compaction_start") {
@@ -558,6 +565,7 @@ function createRunner(
 			};
 			runState.stopReason = "stop";
 			runState.errorMessage = undefined;
+			runState.responseSent = false;
 
 			log.logInfo(`Context sizes - system: ${systemPrompt.length} chars, memory: ${memory.length} chars`);
 
@@ -619,8 +627,8 @@ function createRunner(
 					const errMsg = err instanceof Error ? err.message : String(err);
 					log.logWarning("Failed to send error message", errMsg);
 				}
-			} else {
-				// Send final response
+			} else if (!runState.responseSent) {
+				// Send final response only if not already sent via streaming
 				const messages = session.messages;
 				const lastAssistant = messages.filter((m) => m.role === "assistant").pop();
 				const finalText =
