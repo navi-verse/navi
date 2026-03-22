@@ -91,6 +91,7 @@ export class DiscordBot {
 	private queues = new Map<string, ChannelQueue>();
 	private lastMessage = new Map<string, Message>();
 	private activeThreads = new Map<string, ThreadChannel>();
+	private botMessages = new Map<string, Message>(); // For live editing
 
 	constructor(handler: DiscordHandler, config: { workingDir: string; store: ChatStore; token: string }) {
 		this.handler = handler;
@@ -227,8 +228,50 @@ export class DiscordBot {
 		for (const chunk of chunks) {
 			const sent = await channel.send(chunk);
 			lastId = sent.id;
+			this.botMessages.set(chatId, sent);
 		}
 		return lastId;
+	}
+
+	/**
+	 * Edit the bot's current message in place (live progress).
+	 * Creates a new message if none exists yet.
+	 */
+	async editOrSend(chatId: string, text: string): Promise<string> {
+		const existing = this.botMessages.get(chatId);
+		const truncated = text.length > 2000 ? `${text.substring(0, 1997)}...` : text;
+
+		if (existing) {
+			try {
+				await existing.edit(truncated);
+				return existing.id;
+			} catch {
+				// Edit failed — send new
+			}
+		}
+		return this.sendMessage(chatId, truncated);
+	}
+
+	/**
+	 * Set working indicator on the current message.
+	 */
+	async setWorking(chatId: string, working: boolean): Promise<void> {
+		const msg = this.botMessages.get(chatId);
+		if (!msg) return;
+		try {
+			if (working) {
+				await msg.edit(`${msg.content} ...`);
+			} else {
+				const content = msg.content.replace(/ \.\.\.$/, "");
+				await msg.edit(content);
+			}
+		} catch {
+			// Ignore edit errors
+		}
+	}
+
+	clearBotMessage(chatId: string): void {
+		this.botMessages.delete(chatId);
 	}
 
 	async sendFile(chatId: string, filePath: string, _title?: string): Promise<void> {
