@@ -58,6 +58,48 @@ async function doLogin(providerId = "anthropic"): Promise<void> {
 
 	rl.close();
 	console.log(`\nLogin successful! ${providerId} credentials saved to ~/.nv/auth.json`);
+
+	// Configure model
+	const defaultModels: Record<string, { provider: string; model: string }> = {
+		anthropic: { provider: "anthropic", model: "claude-sonnet-4-6" },
+		"openai-codex": { provider: "openai-codex", model: "gpt-5.4" },
+	};
+
+	const newModel = defaultModels[providerId];
+	if (!newModel) {
+		rl.close();
+		return;
+	}
+
+	const config = loadModelConfig();
+	const hasPrimary = authStorage.hasAuth(config.primary.provider);
+
+	if (hasPrimary && config.primary.provider !== providerId) {
+		// Already have a different provider — ask role for the new one
+		const rl2 = createInterface({ input: process.stdin, output: process.stdout });
+		const answer = await new Promise<string>((res) =>
+			rl2.question(
+				`You already have ${formatModelName(config.primary)} configured.\nSet ${formatModelName(newModel)} as (p)rimary or (f)allback? [f] `,
+				(a) => res(a.trim().toLowerCase()),
+			),
+		);
+		rl2.close();
+
+		if (answer === "p" || answer === "primary") {
+			config.fallback = config.primary;
+			config.primary = newModel;
+		} else {
+			config.fallback = newModel;
+		}
+	} else {
+		config.primary = newModel;
+	}
+
+	saveModelConfig(config);
+	console.log(`Primary: ${formatModelName(config.primary)}`);
+	if (config.fallback) {
+		console.log(`Fallback: ${formatModelName(config.fallback)}`);
+	}
 }
 
 // ============================================================================
