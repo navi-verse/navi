@@ -12,7 +12,9 @@
 		"install-global": "npm run build && npm install -g .",
 		"dev": "npx tsx --watch-path src --watch src/main.ts run",
 		"start": "npx tsx src/main.ts run",
-		"check": "biome check --write --error-on-warnings . && tsc --noEmit"
+		"check": "biome check --write --error-on-warnings . && tsc --noEmit",
+		"login:claude": "npx tsx src/main.ts --login anthropic",
+		"login:codex": "npx tsx src/main.ts --login openai-codex"
 	},
 	"dependencies": {
 		"@mariozechner/pi-agent-core": "^0.61.1",
