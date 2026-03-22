@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits, type Message, Partials } from "discord.js";
+import { Client, Events, GatewayIntentBits, type Message, Partials, type ThreadChannel } from "discord.js";
 import { readFileSync } from "fs";
 import * as log from "./log.js";
 import type { ChatStore } from "./store.js";
@@ -30,6 +30,7 @@ export interface DiscordContext {
 	sendVoice: (filePath: string) => Promise<void>;
 	react: (emoji: string) => Promise<void>;
 	reply: (messageId: string, text: string) => Promise<void>;
+	respondInThread: (text: string) => Promise<void>;
 	sendLocation: (lat: number, lng: number, name?: string) => Promise<void>;
 	sendContact: (name: string, phone: string) => Promise<void>;
 }
@@ -89,6 +90,7 @@ export class DiscordBot {
 	private store: ChatStore;
 	private queues = new Map<string, ChannelQueue>();
 	private lastMessage = new Map<string, Message>();
+	private activeThreads = new Map<string, ThreadChannel>();
 
 	constructor(handler: DiscordHandler, config: { workingDir: string; store: ChatStore; token: string }) {
 		this.handler = handler;
@@ -269,6 +271,37 @@ export class DiscordBot {
 			return sent.id;
 		}
 		return this.sendMessage(chatId, text);
+	}
+
+	async ensureThread(chatId: string, parentMessageId: string): Promise<ThreadChannel> {
+		const existing = this.activeThreads.get(chatId);
+		if (existing) return existing;
+
+		const channelId = chatId.replace("discord:", "");
+		const channel = await this.client.channels.fetch(channelId);
+		if (!channel?.isTextBased() || !("messages" in channel)) throw new Error("Not a text channel");
+
+		const parentMsg = await channel.messages.fetch(parentMessageId);
+		const thread = await parentMsg.startThread({
+			name: "Details",
+			autoArchiveDuration: 60,
+		});
+		this.activeThreads.set(chatId, thread);
+		return thread;
+	}
+
+	async sendInThread(chatId: string, text: string): Promise<void> {
+		const thread = this.activeThreads.get(chatId);
+		if (!thread) return;
+
+		const chunks = this.splitMessage(text);
+		for (const chunk of chunks) {
+			await thread.send(chunk);
+		}
+	}
+
+	clearThread(chatId: string): void {
+		this.activeThreads.delete(chatId);
 	}
 
 	logBotResponse(chatId: string, text: string, ts: string): void {
