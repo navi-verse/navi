@@ -435,6 +435,47 @@ export class DiscordBot {
 		});
 	}
 
+	/**
+	 * Get channel and user info for the system prompt.
+	 * Returns guild channels and members the bot can see.
+	 */
+	getChannelInfo(chatId: string): {
+		channels: Array<{ id: string; name: string }>;
+		users: Array<{ id: string; name: string }>;
+	} {
+		const channelId = chatId.replace("discord:", "");
+		const channel = this.client.channels.cache.get(channelId);
+		const guild = channel && "guild" in channel ? channel.guild : null;
+
+		const channels: Array<{ id: string; name: string }> = [];
+		const users: Array<{ id: string; name: string }> = [];
+
+		if (guild) {
+			for (const [, ch] of guild.channels.cache) {
+				if (ch.isTextBased() && "name" in ch) {
+					channels.push({ id: ch.id, name: ch.name });
+				}
+			}
+			for (const [, member] of guild.members.cache) {
+				if (!member.user.bot) {
+					users.push({ id: member.id, name: member.displayName });
+				}
+			}
+		}
+
+		return { channels, users };
+	}
+
+	/**
+	 * Get the name of a channel.
+	 */
+	getChannelName(chatId: string): string | undefined {
+		const channelId = chatId.replace("discord:", "");
+		const channel = this.client.channels.cache.get(channelId);
+		if (channel && "name" in channel) return channel.name as string;
+		return undefined;
+	}
+
 	enqueueEvent(event: DiscordEvent): boolean {
 		const queue = this.getQueue(event.chatId);
 		if (queue.size() >= 5) {
