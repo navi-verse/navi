@@ -60,6 +60,7 @@ export interface NvHandler {
 	handleStop(chatId: string, bot: WhatsAppBot): Promise<void>;
 	handleNew(chatId: string, bot: WhatsAppBot): void;
 	handleStatus(chatId: string, bot: WhatsAppBot): void;
+	handleModel(chatId: string, bot: WhatsAppBot, args?: string): void;
 	handleHelp(chatId: string, bot: WhatsAppBot): void;
 }
 
@@ -294,6 +295,10 @@ export class WhatsAppBot {
 		}
 		if (cmd === "/help") {
 			this.handler.handleHelp(chatId, this);
+			return;
+		}
+		if (cmd === "/model" || cmd?.startsWith("/model ")) {
+			this.handler.handleModel(chatId, this, text?.trim().substring(6).trim() || undefined);
 			return;
 		}
 

@@ -1,5 +1,5 @@
 import { Agent, type AgentEvent } from "@mariozechner/pi-agent-core";
-import { getModel, type ImageContent } from "@mariozechner/pi-ai";
+import type { ImageContent, Model } from "@mariozechner/pi-ai";
 import {
 	AgentSession,
 	AuthStorage,
@@ -18,6 +18,7 @@ import { homedir } from "os";
 import { join } from "path";
 import { createNvSettingsManager, syncLogToSessionManager } from "./context.js";
 import * as log from "./log.js";
+import type { ModelEntry } from "./model-config.js";
 import type { ChatStore } from "./store.js";
 import {
 	createNvTools,
@@ -30,8 +31,6 @@ import {
 } from "./tools/index.js";
 import type { WhatsAppContext } from "./whatsapp.js";
 
-const model = getModel("anthropic", "claude-sonnet-4-6");
-
 export interface AgentRunner {
 	run(ctx: WhatsAppContext, store: ChatStore): Promise<{ stopReason: string; errorMessage?: string }>;
 	steer(text: string): void;
@@ -39,18 +38,7 @@ export interface AgentRunner {
 	lastContextTokens: number;
 	lastMessageCount: number;
 	contextWindow: number;
-}
-
-async function getAnthropicApiKey(authStorage: AuthStorage): Promise<string> {
-	const key = await authStorage.getApiKey("anthropic");
-	if (!key) {
-		throw new Error(
-			"No API key found for anthropic.\n\n" +
-				"Set ANTHROPIC_API_KEY environment variable, or place auth.json in " +
-				join(homedir(), ".nv", "auth.json"),
-		);
-	}
-	return key;
+	modelInfo: ModelEntry;
 }
 
 const IMAGE_MIME_TYPES: Record<string, string> = {
@@ -303,16 +291,32 @@ function extractToolResultText(result: unknown): string {
 // Cache runners per chat
 const chatRunners = new Map<string, AgentRunner>();
 
-export function getOrCreateRunner(chatId: string, chatDir: string, workingDir: string): AgentRunner {
+export function getOrCreateRunner(
+	chatId: string,
+	chatDir: string,
+	workingDir: string,
+	model: Model<any>,
+	modelEntry: ModelEntry,
+): AgentRunner {
 	const existing = chatRunners.get(chatId);
 	if (existing) return existing;
 
-	const runner = createRunner(chatId, chatDir, workingDir);
+	const runner = createRunner(chatId, chatDir, workingDir, model, modelEntry);
 	chatRunners.set(chatId, runner);
 	return runner;
 }
 
-function createRunner(chatId: string, chatDir: string, workingDir: string): AgentRunner {
+export function resetRunner(chatId: string): void {
+	chatRunners.delete(chatId);
+}
+
+function createRunner(
+	chatId: string,
+	chatDir: string,
+	workingDir: string,
+	model: Model<any>,
+	modelEntry: ModelEntry,
+): AgentRunner {
 	const scratchDir = join(chatDir, "scratch");
 	mkdirSync(scratchDir, { recursive: true });
 	const tools = createNvTools(scratchDir);
@@ -336,7 +340,17 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 			tools,
 		},
 		convertToLlm,
-		getApiKey: async () => getAnthropicApiKey(authStorage),
+		getApiKey: async (provider?: string) => {
+			const key = await modelRegistry.getApiKeyForProvider(provider || modelEntry.provider);
+			if (!key) {
+				throw new Error(
+					`Authentication failed for "${provider || modelEntry.provider}". ` +
+						"Credentials may have expired or network is unavailable. " +
+						`Run 'nv --login ${provider || modelEntry.provider}' to re-authenticate.`,
+				);
+			}
+			return key;
+		},
 		steeringMode: "one-at-a-time",
 		followUpMode: "all",
 	});
@@ -677,6 +691,7 @@ function createRunner(chatId: string, chatDir: string, workingDir: string): Agen
 		lastContextTokens: 0,
 		lastMessageCount: 0,
 		contextWindow: model.contextWindow || 1000000,
+		modelInfo: modelEntry,
 	};
 
 	return runner;

@@ -6,9 +6,17 @@ import { unlinkSync } from "fs";
 import { homedir } from "os";
 import { join, resolve } from "path";
 import { createInterface } from "readline";
-import { type AgentRunner, getOrCreateRunner } from "./agent.js";
+import { type AgentRunner, getOrCreateRunner, resetRunner } from "./agent.js";
 import { createEventsWatcher } from "./events.js";
 import * as log from "./log.js";
+import {
+	formatModelName,
+	loadModelConfig,
+	type ModelConfig,
+	resolveModel,
+	saveModelConfig,
+	shouldFallback,
+} from "./model-config.js";
 import { ChatStore } from "./store.js";
 import { type NvHandler, type WhatsAppBot, WhatsAppBot as WhatsAppBotClass, type WhatsAppEvent } from "./whatsapp.js";
 
@@ -16,16 +24,16 @@ import { type NvHandler, type WhatsAppBot, WhatsAppBot as WhatsAppBotClass, type
 // Login
 // ============================================================================
 
-async function doLogin(): Promise<void> {
+async function doLogin(providerId = "anthropic"): Promise<void> {
 	const authStorage = AuthStorage.create(join(homedir(), ".nv", "auth.json"));
 
 	const rl = createInterface({ input: process.stdin, output: process.stdout });
 	const prompt = (msg: string): Promise<string> =>
 		new Promise((resolve) => rl.question(msg, (answer) => resolve(answer)));
 
-	console.log("Logging in to Anthropic via OAuth...\n");
+	console.log(`Logging in to ${providerId} via OAuth...\n`);
 
-	await authStorage.login("anthropic", {
+	await authStorage.login(providerId, {
 		onAuth: (info) => {
 			console.log(`Open this URL in your browser:\n\n  ${info.url}\n`);
 			if (info.instructions) {
@@ -49,7 +57,7 @@ async function doLogin(): Promise<void> {
 	});
 
 	rl.close();
-	console.log("\nLogin successful! Credentials saved to ~/.nv/auth.json");
+	console.log(`\nLogin successful! ${providerId} credentials saved to ~/.nv/auth.json`);
 }
 
 // ============================================================================
@@ -135,7 +143,7 @@ function serviceCmd(action: "start" | "stop" | "restart" | "status" | "logs"): v
 
 interface ParsedArgs {
 	workingDir: string;
-	login?: boolean;
+	login?: string;
 	setKey?: { provider: string; key: string };
 	installSkill?: string;
 	service?: "start" | "stop" | "restart" | "status" | "logs" | "run";
@@ -144,7 +152,7 @@ interface ParsedArgs {
 function parseArgs(): ParsedArgs {
 	const args = process.argv.slice(2);
 	let workingDir: string | undefined;
-	let login = false;
+	let login: string | undefined;
 	let setKey: { provider: string; key: string } | undefined;
 	let skill: string | undefined;
 	let service: ParsedArgs["service"];
@@ -154,7 +162,7 @@ function parseArgs(): ParsedArgs {
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
 		if (arg === "--login") {
-			login = true;
+			login = args[i + 1] && !args[i + 1].startsWith("-") ? args[++i] : "anthropic";
 		} else if (arg === "--set-key" && args[i + 1] && args[i + 2]) {
 			setKey = { provider: args[++i], key: args[++i] };
 		} else if (arg === "--install-skill" && args[i + 1]) {
@@ -180,7 +188,7 @@ function parseArgs(): ParsedArgs {
 const parsedArgs = parseArgs();
 
 if (parsedArgs.login) {
-	await doLogin();
+	await doLogin(parsedArgs.login);
 	process.exit(0);
 }
 
@@ -209,7 +217,7 @@ if (!parsedArgs.service) {
 	console.log("  logs                                 Tail the log file");
 	console.log("");
 	console.log("Setup:");
-	console.log("  --login                              OAuth login for Anthropic");
+	console.log("  --login [provider]                   OAuth login (default: anthropic)");
 	console.log("  --set-key <provider> <key>           Store an API key");
 	console.log("  --install-skill <owner/repo/skill>   Install a skill from GitHub");
 	console.log("");
@@ -226,13 +234,21 @@ const { workingDir } = { workingDir: parsedArgs.workingDir };
 
 {
 	const authStorage = AuthStorage.create(join(homedir(), ".nv", "auth.json"));
-	const hasAuth = authStorage.hasAuth("anthropic");
-	if (!hasAuth) {
-		console.error("No Anthropic credentials found.");
+	const config = loadModelConfig();
+	const hasPrimary = authStorage.hasAuth(config.primary.provider);
+	const hasFallback = config.fallback ? authStorage.hasAuth(config.fallback.provider) : false;
+
+	if (!hasPrimary && !hasFallback) {
+		console.error(`No credentials found for ${config.primary.provider}.`);
 		console.error("");
-		console.error("  nv --login                  OAuth login (uses Claude subscription)");
-		console.error("  nv --set-key anthropic <key> API key from console.anthropic.com");
+		console.error(`  nv --login ${config.primary.provider}`);
+		console.error(`  nv --set-key ${config.primary.provider} <key>`);
 		process.exit(1);
+	}
+	if (!hasPrimary && hasFallback) {
+		log.logWarning(
+			`No auth for primary model (${formatModelName(config.primary)}), will use fallback (${formatModelName(config.fallback!)})`,
+		);
 	}
 }
 
@@ -249,13 +265,15 @@ interface ChatState {
 
 const chatStates = new Map<string, ChatState>();
 
-function getState(chatId: string): ChatState {
+function getState(chatId: string, modelConfig?: ModelConfig): ChatState {
 	let state = chatStates.get(chatId);
 	if (!state) {
 		const chatDir = join(workingDir, chatId);
+		const config = modelConfig || loadModelConfig();
+		const model = resolveModel(config.primary);
 		state = {
 			running: false,
-			runner: getOrCreateRunner(chatId, chatDir, workingDir),
+			runner: getOrCreateRunner(chatId, chatDir, workingDir, model, config.primary),
 			store: new ChatStore({ workingDir }),
 			stopRequested: false,
 		};
@@ -394,15 +412,85 @@ const handler: NvHandler = {
 
 		const messages = state?.runner.lastMessageCount || 0;
 
+		const config = loadModelConfig();
+		const modelName = state?.runner.modelInfo
+			? formatModelName(state.runner.modelInfo)
+			: formatModelName(config.primary);
+		const fallbackName = config.fallback ? formatModelName(config.fallback) : "none";
+
 		const lines = [
 			"*Navi Status* 🧚🏼",
 			`⏱ Uptime: ${hours}h ${mins}m`,
 			`🧠 Context: ${formatT(tokens)} / ${formatT(maxTokens)} (${pct}%)`,
 			`💬 Messages: ${messages}`,
 			`⚡ Status: ${state?.running ? "working" : "idle"}`,
-			`🤖 Model: claude-sonnet-4-6`,
+			`🤖 Model: ${modelName}`,
+			`🔄 Fallback: ${fallbackName}`,
 		];
 		bot.sendMessage(chatId, lines.join("\n"));
+	},
+
+	handleModel(chatId: string, bot: WhatsAppBot, args?: string): void {
+		const config = loadModelConfig();
+
+		if (!args) {
+			const lines = [
+				"*Current Model*",
+				`🤖 Primary: ${formatModelName(config.primary)}`,
+				`🔄 Fallback: ${config.fallback ? formatModelName(config.fallback) : "none"}`,
+				"",
+				"Use /model provider/model to switch",
+				"Use /model fallback provider/model to set fallback",
+				"Use /model fallback none to remove fallback",
+			];
+			bot.sendMessage(chatId, lines.join("\n"));
+			return;
+		}
+
+		// Handle fallback setting
+		if (args.startsWith("fallback ")) {
+			const fallbackArg = args.substring(9).trim();
+			if (fallbackArg === "none") {
+				config.fallback = undefined;
+				saveModelConfig(config);
+				bot.sendMessage(chatId, "Fallback removed.");
+			} else {
+				const parts = fallbackArg.split("/");
+				if (parts.length !== 2) {
+					bot.sendMessage(chatId, "Format: /model fallback provider/model");
+					return;
+				}
+				try {
+					resolveModel({ provider: parts[0], model: parts[1] });
+					config.fallback = { provider: parts[0], model: parts[1] };
+					saveModelConfig(config);
+					bot.sendMessage(chatId, `Fallback set to ${fallbackArg}`);
+				} catch {
+					bot.sendMessage(chatId, `Unknown model: ${fallbackArg}`);
+				}
+			}
+			return;
+		}
+
+		// Switch primary model
+		const parts = args.split("/");
+		if (parts.length !== 2) {
+			bot.sendMessage(chatId, "Format: /model provider/model");
+			return;
+		}
+		try {
+			resolveModel({ provider: parts[0], model: parts[1] });
+			config.primary = { provider: parts[0], model: parts[1] };
+			saveModelConfig(config);
+			// Reset all runners so they pick up the new model
+			for (const [id] of chatStates) {
+				resetRunner(id);
+			}
+			chatStates.clear();
+			bot.sendMessage(chatId, `Model switched to ${args}`);
+		} catch {
+			bot.sendMessage(chatId, `Unknown model: ${args}`);
+		}
 	},
 
 	handleHelp(chatId: string, bot: WhatsAppBot): void {
@@ -410,6 +498,7 @@ const handler: NvHandler = {
 			"*Commands*",
 			"/new — fresh conversation",
 			"/status — bot status",
+			"/model — show/switch model",
 			"/help — this message",
 			"stop — cancel current task",
 		];
@@ -438,8 +527,31 @@ const handler: NvHandler = {
 			const errMsg = err instanceof Error ? err.message : String(err);
 			log.logWarning(`[${event.chatId}] Run error`, errMsg);
 
-			if (errMsg.includes("Authentication failed") || errMsg.includes("No API key") || errMsg.includes("expired")) {
-				await bot.sendMessage(event.chatId, "Auth expired. Run `nv --login` on the host to re-authenticate.");
+			if (shouldFallback(errMsg)) {
+				const config = loadModelConfig();
+				if (config.fallback) {
+					log.logInfo(`[${event.chatId}] Primary failed, trying fallback: ${formatModelName(config.fallback)}`);
+					try {
+						resetRunner(event.chatId);
+						chatStates.delete(event.chatId);
+						const fallbackState = getState(event.chatId, {
+							primary: config.fallback,
+						});
+						fallbackState.running = true;
+						const fallbackCtx = createWhatsAppContext(event, bot, fallbackState, isEvent);
+						await fallbackCtx.setTyping(true);
+						await fallbackState.runner.run(fallbackCtx, fallbackState.store);
+						await fallbackCtx.setTyping(false);
+						return;
+					} catch (fallbackErr) {
+						const fbMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+						log.logWarning(`[${event.chatId}] Fallback also failed`, fbMsg);
+					}
+				}
+				await bot.sendMessage(
+					event.chatId,
+					`Auth expired. Run \`nv --login ${loadModelConfig().primary.provider}\` on the host.`,
+				);
 			}
 		} finally {
 			state.running = false;
